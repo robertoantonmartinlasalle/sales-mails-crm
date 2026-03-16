@@ -73,7 +73,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
 
-    # Aplicaciones propias del proyecto (se añadirán más adelante)
+    # Aplicaciones propias del proyecto
+    "core",
 ]
 
 
