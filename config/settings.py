@@ -215,3 +215,11 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 # =========================================================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =========================================================
+# MODELO DE USUARIO PERSONALIZADO
+# =========================================================
+# Django utilizará el modelo Usuario definido en la app users
+# como modelo principal de autenticación del sistema.
+
+AUTH_USER_MODEL = "users.Usuario"
