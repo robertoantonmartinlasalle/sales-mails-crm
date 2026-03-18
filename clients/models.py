@@ -1,3 +1,4 @@
 from django.db import models
 
-# Create your models here.
+from .models.estadoCliente import EstadoCliente
+from .models.cliente import Cliente
