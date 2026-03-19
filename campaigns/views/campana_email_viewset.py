@@ -14,6 +14,8 @@ class CampanaEmailViewSet(viewsets.ModelViewSet):
     - Crear campañas
     - Editar campañas
     - Eliminar campañas
+
+    Todo filtrado por empresa (multiempresa).
     """
 
     serializer_class = CampanaEmailSerializer
@@ -21,8 +23,19 @@ class CampanaEmailViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Devuelve todas las campañas.
-
-        (De momento no filtramos por empresa, pero se podrá añadir).
+        Devolvemos únicamente las campañas
+        de la empresa del usuario autenticado.
         """
-        return CampanaEmail.objects.all()
+        return CampanaEmail.objects.for_empresa(
+            self.request.user.empresa
+        )
+
+    def perform_create(self, serializer):
+        """
+        Asignamos automáticamente la empresa al crear.
+
+        El usuario NO puede definirla manualmente.
+        """
+        serializer.save(
+            empresa=self.request.user.empresa
+        )

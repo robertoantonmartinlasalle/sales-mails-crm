@@ -24,6 +24,7 @@ class CampanaEmailSerializer(serializers.ModelSerializer):
 
     - Convertir datos JSON <-> modelo CampanaEmail
     - Validar relaciones (plantilla)
+    - Proteger el campo empresa (multiempresa)
     - Mejorar la representación de datos para el frontend
     """
 
@@ -44,12 +45,22 @@ class CampanaEmailSerializer(serializers.ModelSerializer):
         """
         fields = "__all__"
 
+        """
+        La empresa NO puede venir desde el frontend.
+
+        Se asigna automáticamente en el backend usando:
+            serializer.save(empresa=request.user.empresa)
+        """
+        read_only_fields = ["empresa"]
+
     def validate(self, data):
         """
         Validación personalizada.
 
-        Comprobamos que la plantilla existe.
-        (DRF ya lo valida, pero dejamos preparado para futuras reglas).
+        Comprobamos que:
+
+        - La plantilla es obligatoria
+        - (Preparado para futuras validaciones multiempresa)
         """
 
         plantilla = data.get("plantilla")
