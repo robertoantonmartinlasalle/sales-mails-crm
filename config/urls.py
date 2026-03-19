@@ -7,4 +7,6 @@ urlpatterns = [
 
     # API principal
     path('api/', include('clients.urls')),
+    # Campañas
+    path('api/', include('campaigns.urls')),
 ]
