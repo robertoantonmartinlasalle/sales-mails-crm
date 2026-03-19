@@ -4,6 +4,32 @@ from campaigns.models.campanaemail import CampanaEmail
 from clients.models import Cliente
 
 
+class CampanaSimpleSerializer(serializers.ModelSerializer):
+    """
+    Serializer simplificado de CampanaEmail.
+
+    Se utiliza para mostrar información básica de la campaña
+    dentro del envío.
+    """
+
+    class Meta:
+        model = CampanaEmail
+        fields = ["id", "nombre"]
+
+
+class ClienteSimpleSerializer(serializers.ModelSerializer):
+    """
+    Serializer simplificado de Cliente.
+
+    Se utiliza para mostrar información básica del cliente
+    dentro del envío.
+    """
+
+    class Meta:
+        model = Cliente
+        fields = ["id", "nombre", "email"]
+
+
 class CampaignSendSerializer(serializers.ModelSerializer):
     """
     Serializer del modelo CampaignSend.
@@ -11,8 +37,22 @@ class CampaignSendSerializer(serializers.ModelSerializer):
     Se encarga de:
 
     - Convertir datos JSON <-> modelo CampaignSend
-    - Validar relaciones entre cliente y campaña
+    - Validar relaciones
+    - Mejorar la respuesta de la API
     """
+
+    """
+    Campos de solo lectura para enriquecer la respuesta.
+    """
+    campana_detalle = CampanaSimpleSerializer(
+        source="campana",
+        read_only=True
+    )
+
+    cliente_detalle = ClienteSimpleSerializer(
+        source="cliente",
+        read_only=True
+    )
 
     class Meta:
         model = CampaignSend
