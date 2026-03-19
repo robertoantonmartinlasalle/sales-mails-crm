@@ -76,6 +76,9 @@ INSTALLED_APPS = [
     # Aplicaciones propias del proyecto
     "core",
     "users",
+    "clients",
+    "campaigns",
+    "crm",
 ]
 
 
