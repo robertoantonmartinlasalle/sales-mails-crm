@@ -8,6 +8,8 @@ from django.utils import timezone
 from campaigns.models.campaignsend import CampaignSend
 from campaigns.serializers.campaign_send_serializer import CampaignSendSerializer
 
+from core.services.email_service import send_email  # Importamos el servicio de envío de emails
+
 
 class CampaignSendViewSet(viewsets.ModelViewSet):
     """
@@ -23,34 +25,23 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
     Todo filtrado por empresa (multiempresa).
 
-    Además añadimos una acción personalizada:
-    - enviar campaña
+    Además incluye:
+    - Acción personalizada para enviar campañas
     """
 
     serializer_class = CampaignSendSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Devolvemos únicamente los envíos
-        de la empresa del usuario autenticado.
-        """
         return CampaignSend.objects.for_empresa(
             self.request.user.empresa
         )
 
     def perform_create(self, serializer):
-        """
-        Asignamos automáticamente la empresa
-        del usuario al crear un envío.
-
-        El frontend NO puede decidir la empresa.
-        """
         serializer.save(
             empresa=self.request.user.empresa
         )
 
-    # Definimos la acción
     @action(detail=True, methods=["post"])
     def enviar(self, request, pk=None):
         """
@@ -59,24 +50,59 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         Flujo:
 
         1. Obtener el envío
-        2. Validar que está pendiente
-        3. Simular envío
-        4. Actualizar estado y fecha
+        2. Validar estado
+        3. Construir email desde plantilla
+        4. Enviar email real
+        5. Actualizar estado y fecha
         """
 
         envio = self.get_object()
 
-        # 🔒 Solo permitir enviar si está pendiente
+        # Solo permitir envío si está pendiente
         if envio.estado != "pendiente":
             return Response(
                 {"error": "Este envío ya fue procesado."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        #  Simulación (aquí luego irá send_email)
-        print(f"Enviando email a {envio.cliente.email}")
+        """
+        Obtenemos la plantilla asociada a la campaña.
 
-        #  Actualización de estado
+        Flujo:
+        CampaignSend → CampanaEmail → PlantillaEmail
+        """
+        plantilla = envio.campana.plantilla
+
+        """
+        Construimos el mensaje sustituyendo variables dinámicas.
+
+        De momento soportamos {{nombre}}, pero esto se podrá ampliar.
+        """
+        mensaje = plantilla.cuerpo.replace(
+            "{{nombre}}",
+            envio.cliente.nombre
+        )
+
+        """
+        Ejecutamos el envío real utilizando nuestro servicio de email.
+        """
+        enviado = send_email(
+            to=envio.cliente.email,
+            subject=plantilla.asunto,
+            message=mensaje
+        )
+
+        # 🚨 Si falla el envío
+        if not enviado:
+            envio.estado = "error"
+            envio.save()
+
+            return Response(
+                {"error": "Error al enviar el email."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        
         envio.estado = "enviado"
         envio.fecha_envio = timezone.now()
         envio.save()
