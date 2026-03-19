@@ -1,5 +1,6 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from clients.models import Cliente
 from clients.serializers.cliente_serializer import ClienteSerializer
@@ -37,4 +38,43 @@ class ClienteViewSet(viewsets.ModelViewSet):
         """
         serializer.save(
             empresa=self.request.user.empresa
+        )
+
+    def create(self, request, *args, **kwargs):
+        """
+        Sobreescribimos el método create para permitir:
+
+        - Crear un único cliente (comportamiento estándar)
+        - Crear múltiples clientes en una sola petición (bulk create)
+
+        Detectamos si request.data es una lista o un objeto.
+        """
+
+        # Si recibimos una lista → creación múltiple
+        is_many = isinstance(request.data, list)
+
+        serializer = self.get_serializer(
+            data=request.data,
+            many=is_many
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        """
+        IMPORTANTE:
+
+        En multiempresa NO confiamos en el frontend.
+        La empresa SIEMPRE se asigna desde el usuario autenticado.
+        """
+
+        if is_many:
+            serializer.save(
+                empresa=self.request.user.empresa
+            )
+        else:
+            self.perform_create(serializer)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
         )
