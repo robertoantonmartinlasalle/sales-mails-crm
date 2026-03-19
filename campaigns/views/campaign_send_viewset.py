@@ -16,6 +16,8 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
     - Crear envíos
     - Editar estado del envío
     - Eliminar envíos
+
+    Todo filtrado por empresa (multiempresa).
     """
 
     serializer_class = CampaignSendSerializer
@@ -23,8 +25,20 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Devuelve todos los envíos.
-
-        (Más adelante podremos filtrar por empresa a través del cliente).
+        Devolvemos únicamente los envíos
+        de la empresa del usuario autenticado.
         """
-        return CampaignSend.objects.all()
+        return CampaignSend.objects.for_empresa(
+            self.request.user.empresa
+        )
+
+    def perform_create(self, serializer):
+        """
+        Asignamos automáticamente la empresa
+        del usuario al crear un envío.
+
+        El frontend NO puede decidir la empresa.
+        """
+        serializer.save(
+            empresa=self.request.user.empresa
+        )

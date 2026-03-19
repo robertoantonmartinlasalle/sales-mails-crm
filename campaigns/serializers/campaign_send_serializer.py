@@ -39,9 +39,13 @@ class CampaignSendSerializer(serializers.ModelSerializer):
     - Convertir datos JSON <-> modelo CampaignSend
     - Validar relaciones entre cliente y campaña
     - Garantizar aislamiento multiempresa
+    - Proteger el campo empresa
     - Mejorar la respuesta de la API
     """
 
+    """
+    Campos enriquecidos para mejorar la respuesta.
+    """
     campana_detalle = CampanaSimpleSerializer(
         source="campana",
         read_only=True
@@ -56,6 +60,13 @@ class CampaignSendSerializer(serializers.ModelSerializer):
         model = CampaignSend
         fields = "__all__"
 
+        """
+        La empresa NO puede ser enviada desde el frontend.
+
+        Se asigna automáticamente en el backend.
+        """
+        read_only_fields = ["empresa"]
+
     def validate(self, data):
         """
         Validación personalizada.
@@ -63,8 +74,8 @@ class CampaignSendSerializer(serializers.ModelSerializer):
         Comprobamos:
 
         1. Que existen campaña y cliente
-        2. Que ambos pertenecen a la misma empresa del usuario
-        3. Que campaña y cliente pertenecen a la misma empresa entre sí
+        2. Que ambos pertenecen a la empresa del usuario
+        3. Que campaña y cliente pertenecen a la misma empresa
         """
 
         request = self.context.get("request")
@@ -88,7 +99,7 @@ class CampaignSendSerializer(serializers.ModelSerializer):
                 "El cliente es obligatorio."
             )
 
-        # VALIDACIÓN MULTIEMPRESA (IMPORTANTE)
+        # VALIDACIÓN MULTIEMPRESA
         if campana.empresa != empresa:
             raise serializers.ValidationError(
                 "La campaña no pertenece a tu empresa."
