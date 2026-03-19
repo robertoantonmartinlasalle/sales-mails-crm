@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "users",
     "clients",
     "campaigns",
+    "crm",
 ]
 
 
