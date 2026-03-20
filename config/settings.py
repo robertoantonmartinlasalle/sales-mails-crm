@@ -12,6 +12,7 @@ proyecto.
 
 from pathlib import Path
 import environ
+from datetime import timedelta  # 🔐 Necesario para configurar JWT
 
 
 # =========================================================
@@ -26,13 +27,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =========================================================
 # CARGA DE VARIABLES DE ENTORNO
 # =========================================================
-# Se utiliza la librería django-environ para leer las
-# variables definidas en el archivo .env.
-#
-# Esto permite:
-# - No incluir credenciales en el código
-# - Tener configuraciones diferentes según el entorno
-#   (desarrollo, testing, producción)
 
 env = environ.Env()
 
@@ -44,21 +38,16 @@ environ.Env.read_env(BASE_DIR / ".env")
 # CONFIGURACIÓN BÁSICA DE DJANGO
 # =========================================================
 
-# Clave secreta usada por Django para seguridad interna
 SECRET_KEY = env("SECRET_KEY")
 
-# Activar modo debug en desarrollo
 DEBUG = env.bool("DEBUG", default=False)
 
-# Hosts permitidos para acceder a la aplicación
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 
 # =========================================================
 # APLICACIONES INSTALADAS
 # =========================================================
-# Aquí se registran todas las aplicaciones que forman
-# parte del proyecto.
 
 INSTALLED_APPS = [
     # Aplicaciones internas de Django
@@ -85,8 +74,6 @@ INSTALLED_APPS = [
 # =========================================================
 # MIDDLEWARE
 # =========================================================
-# El middleware es una capa intermedia que procesa las
-# peticiones y respuestas HTTP.
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -110,9 +97,6 @@ ROOT_URLCONF = "config.urls"
 # =========================================================
 # CONFIGURACIÓN DE TEMPLATES
 # =========================================================
-# Aunque este proyecto será principalmente un backend API,
-# Django requiere esta configuración para algunas
-# funcionalidades internas.
 
 TEMPLATES = [
     {
@@ -140,9 +124,6 @@ WSGI_APPLICATION = "config.wsgi.application"
 # =========================================================
 # BASE DE DATOS
 # =========================================================
-# El proyecto utiliza PostgreSQL como base de datos
-# principal. Las credenciales se cargan desde el archivo
-# .env para evitar exponerlas en el código.
 
 DATABASES = {
     "default": {
@@ -195,16 +176,12 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-# Directorio donde se recopilarán los archivos estáticos
-# en un entorno de producción
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # =========================================================
 # CONFIGURACIÓN DE EMAIL
 # =========================================================
-# Esta configuración será utilizada en el futuro para
-# el sistema de envío de campañas del CRM.
 
 EMAIL_BACKEND = env("EMAIL_BACKEND")
 EMAIL_HOST = env("EMAIL_HOST")
@@ -213,16 +190,52 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 
+
 # =========================================================
 # CONFIGURACIÓN DE ID POR DEFECTO
 # =========================================================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
 # =========================================================
 # MODELO DE USUARIO PERSONALIZADO
 # =========================================================
-# Django utilizará el modelo Usuario definido en la app users
-# como modelo principal de autenticación del sistema.
 
 AUTH_USER_MODEL = "users.Usuario"
+
+
+# =========================================================
+# CONFIGURACIÓN DE DJANGO REST FRAMEWORK (JWT)
+# =========================================================
+# Aquí definimos cómo se autentican las peticiones a nuestra API.
+# En lugar de usar sesiones (cookies), usaremos JWT (tokens).
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        # Autenticación basada en JSON Web Tokens
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+}
+
+
+# =========================================================
+# CONFIGURACIÓN DE JSON WEB TOKENS (JWT)
+# =========================================================
+# Aquí controlamos cómo se generan y validan los tokens.
+
+SIMPLE_JWT = {
+    # Tiempo de vida del token de acceso (el que se envía en cada request)
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+
+    # Tiempo de vida del refresh token (para renovar sesión)
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+
+    # Tipo de cabecera esperada en las peticiones
+    # Authorization: Bearer <token>
+    "AUTH_HEADER_TYPES": ("Bearer",),
+
+    # IMPORTANTE:
+    # De momento NO cambiamos el campo de login (username/email)
+    # Esto lo haremos en el siguiente paso con un serializer custom
+}
