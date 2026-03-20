@@ -92,7 +92,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
             message=mensaje
         )
 
-        # 🚨 Si falla el envío
+        #  Si falla el envío
         if not enviado:
             envio.estado = "error"
             envio.save()
