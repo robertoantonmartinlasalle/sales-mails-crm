@@ -354,3 +354,82 @@ Authorization: Bearer <access_token>
 - Los estados están ordenados por el campo `orden` y, en caso de empate, por `nombre`.
 - Cada cliente debe tener siempre un estado asociado.
 - Este endpoint se utiliza normalmente para poblar listas desplegables en formularios de clientes.
+
+### Crear estado de cliente
+
+**Endpoint:**
+
+POST /api/estado-clientes/
+
+---
+
+**Descripción:**
+
+Permite crear un nuevo estado de cliente asociado a la empresa del usuario autenticado.
+
+Los estados se utilizan para clasificar la situación de los clientes dentro del CRM (por ejemplo: lead, cliente activo, inactivo, etc.).
+
+La empresa se asigna automáticamente a partir del usuario autenticado.
+
+---
+
+**Headers:**
+
+---
+Authorization: Bearer <access_token>
+Content-Type: application/json
+---
+
+---
+
+**Body (request):**
+
+---
+{
+  "nombre": "Cliente activo",
+  "descripcion": "Cliente con relación activa",
+  "orden": 2
+}
+---
+
+---
+
+**Respuesta exitosa (201 Created):**
+
+---
+{
+  "id": 2,
+  "nombre": "Cliente activo",
+  "descripcion": "Cliente con relación activa",
+  "orden": 2,
+  "empresa": "uuid_empresa"
+}
+---
+
+---
+
+**Errores posibles:**
+
+- **400 Bad Request**
+
+---
+{
+  "nombre": ["Este campo es obligatorio."]
+}
+---
+
+- **401 Unauthorized**
+
+---
+{
+  "detail": "Authentication credentials were not provided."
+}
+---
+
+---
+
+**Notas:**
+
+- El estado se crea siempre dentro de la empresa del usuario autenticado.
+- El campo `orden` permite definir el orden en el que se mostrarán los estados.
+- Este endpoint permite personalizar el flujo de clientes dentro del CRM.
