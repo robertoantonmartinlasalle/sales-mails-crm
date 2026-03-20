@@ -40,8 +40,29 @@ class CampaignSendSerializer(serializers.ModelSerializer):
     - Validar relaciones entre cliente y campaña
     - Garantizar aislamiento multiempresa
     - Proteger el campo empresa
+    - Permitir envío individual y masivo
     - Mejorar la respuesta de la API
     """
+
+    """
+    Campo adicional para soportar envíos masivos.
+
+    En lugar de enviar un único cliente, podemos enviar
+    una lista de IDs de clientes.
+
+    Ejemplo:
+    {
+        "campana": 1,
+        "clientes": [1, 2, 3]
+    }
+
+    Este campo NO existe en el modelo, es solo de entrada (write_only).
+    """
+    clientes = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False
+    )
 
     """
     Campos enriquecidos para mejorar la respuesta.
@@ -73,22 +94,70 @@ class CampaignSendSerializer(serializers.ModelSerializer):
 
         Comprobamos:
 
-        1. Que existen campaña y cliente
-        2. Que ambos pertenecen a la empresa del usuario
-        3. Que campaña y cliente pertenecen a la misma empresa
+        1. Que existe la campaña
+        2. Que los clientes pertenecen a la empresa
+        3. Que la campaña pertenece a la empresa
+        4. Soporte tanto para envío individual como masivo
         """
 
         request = self.context.get("request")
 
+        """
+        Seguridad: si no hay request o usuario,
+        evitamos errores y devolvemos los datos.
+        """
         if not request or not request.user:
             return data
 
         empresa = request.user.empresa
-
         campana = data.get("campana")
+
+        """
+        VALIDACIÓN CASO MASIVO
+
+        Si recibimos el campo "clientes",
+        procesamos envío a múltiples clientes.
+        """
+        clientes_ids = data.get("clientes")
+
+        if clientes_ids:
+            clientes = Cliente.objects.filter(id__in=clientes_ids)
+
+            """
+            Validamos que los clientes existen.
+            """
+            if not clientes.exists():
+                raise serializers.ValidationError(
+                    "Los clientes no son válidos."
+                )
+
+            """
+            Validamos que todos los clientes pertenecen
+            a la empresa del usuario.
+            """
+            for cliente in clientes:
+                if cliente.empresa != empresa:
+                    raise serializers.ValidationError(
+                        "Uno de los clientes no pertenece a tu empresa."
+                    )
+
+            """
+            Validamos que la campaña pertenece a la empresa.
+            """
+            if campana and campana.empresa != empresa:
+                raise serializers.ValidationError(
+                    "La campaña no pertenece a tu empresa."
+                )
+
+            return data
+
+        """
+        VALIDACIÓN CASO INDIVIDUAL
+
+        Comportamiento original: un envío → un cliente
+        """
         cliente = data.get("cliente")
 
-        # Validaciones básicas
         if not campana:
             raise serializers.ValidationError(
                 "La campaña es obligatoria."
@@ -99,7 +168,9 @@ class CampaignSendSerializer(serializers.ModelSerializer):
                 "El cliente es obligatorio."
             )
 
-        # VALIDACIÓN MULTIEMPRESA
+        """
+        VALIDACIÓN MULTIEMPRESA
+        """
         if campana.empresa != empresa:
             raise serializers.ValidationError(
                 "La campaña no pertenece a tu empresa."
@@ -110,7 +181,9 @@ class CampaignSendSerializer(serializers.ModelSerializer):
                 "El cliente no pertenece a tu empresa."
             )
 
-        # VALIDACIÓN ENTRE ELLOS
+        """
+        VALIDACIÓN ENTRE ENTIDADES
+        """
         if campana.empresa != cliente.empresa:
             raise serializers.ValidationError(
                 "La campaña y el cliente no pertenecen a la misma empresa."
