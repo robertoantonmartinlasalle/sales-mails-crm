@@ -24,4 +24,11 @@ urlpatterns = [
     # =========================================================
     # Endpoint para renovar el access token utilizando el refresh token
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
+
+    # =========================================================
+    # USUARIOS
+    # =========================================================
+     
+    path('api/', include('users.urls')),
 ]
