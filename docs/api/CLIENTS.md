@@ -1,3 +1,282 @@
+##  Estados de cliente
+
+---
+
+### Listar estados de cliente
+
+**Endpoint:**
+
+GET /api/estado-clientes/
+
+---
+
+**Descripción:**
+
+Obtiene el listado de estados de cliente pertenecientes a la empresa del usuario autenticado.
+
+Este endpoint está protegido, por lo que requiere un **access token válido**.
+
+Los datos se filtran automáticamente por empresa (multi-tenant), evitando que un usuario acceda a estados de otras organizaciones.
+
+---
+
+**Headers:**
+
+---
+Authorization: Bearer <access_token>
+---
+
+---
+
+**Parámetros:**
+
+- No requiere parámetros obligatorios.
+
+---
+
+**Respuesta exitosa (200 OK):**
+
+---
+[
+  {
+    "id": 8,
+    "nombre": "Nuevo",
+    "descripcion": "Cliente recién creado en el sistema",
+    "orden": 1,
+    "empresa": "uuid_empresa"
+  },
+  {
+    "id": 9,
+    "nombre": "Contactado",
+    "descripcion": "Se ha establecido contacto inicial",
+    "orden": 2,
+    "empresa": "uuid_empresa"
+  }
+]
+---
+
+---
+
+**Descripción de la respuesta:**
+
+- Se devuelve una lista de estados de cliente.
+- Cada estado define una fase dentro del flujo comercial.
+- Todos los estados pertenecen a la empresa del usuario autenticado.
+
+---
+
+**Errores posibles:**
+
+- **401 Unauthorized**
+
+---
+{
+  "detail": "Authentication credentials were not provided."
+}
+---
+
+---
+
+### Crear estado de cliente
+
+**Endpoint:**
+
+POST /api/estado-clientes/
+
+---
+
+**Descripción:**
+
+Permite crear un nuevo estado de cliente asociado a la empresa del usuario autenticado.
+
+La empresa se asigna automáticamente a partir del usuario autenticado, por lo que no es necesario enviarla en la petición.
+
+Este endpoint permite personalizar el flujo de clientes dentro del CRM.
+
+---
+
+**Headers:**
+
+---
+Authorization: Bearer <access_token>  
+Content-Type: application/json
+---
+
+---
+
+**Body (request):**
+
+---
+{
+  "nombre": "Cliente activo",
+  "descripcion": "Cliente con relación activa",
+  "orden": 3
+}
+---
+
+---
+
+**Respuesta exitosa (201 Created):**
+
+---
+{
+  "id": 10,
+  "nombre": "Cliente activo",
+  "descripcion": "Cliente con relación activa",
+  "orden": 3,
+  "empresa": "uuid_empresa"
+}
+---
+
+---
+
+**Errores posibles:**
+
+- **400 Bad Request**
+
+---
+{
+  "nombre": ["Este campo es obligatorio."]
+}
+---
+
+- **401 Unauthorized**
+
+---
+{
+  "detail": "Authentication credentials were not provided."
+}
+---
+
+---
+
+### Obtener detalle de estado de cliente
+
+**Endpoint:**
+
+GET /api/estado-clientes/{id}/
+
+---
+
+**Descripción:**
+
+Obtiene la información detallada de un estado de cliente concreto.
+
+El estado debe pertenecer a la empresa del usuario autenticado.
+
+---
+
+**Headers:**
+
+---
+Authorization: Bearer <access_token>
+---
+
+---
+
+**Respuesta exitosa (200 OK):**
+
+---
+{
+  "id": 8,
+  "nombre": "Nuevo",
+  "descripcion": "Cliente recién creado en el sistema",
+  "orden": 1,
+  "empresa": "uuid_empresa"
+}
+---
+
+---
+
+### Actualizar estado de cliente
+
+**Endpoint:**
+
+PUT /api/estado-clientes/{id}/
+
+---
+
+**Descripción:**
+
+Permite actualizar todos los datos de un estado de cliente existente.
+
+---
+
+**Headers:**
+
+---
+Authorization: Bearer <access_token>  
+Content-Type: application/json
+---
+
+---
+
+**Body (request):**
+
+---
+{
+  "nombre": "Lead",
+  "descripcion": "Primer contacto comercial",
+  "orden": 1
+}
+---
+
+---
+
+**Respuesta exitosa (200 OK):**
+
+---
+{
+  "id": 8,
+  "nombre": "Lead",
+  "descripcion": "Primer contacto comercial",
+  "orden": 1,
+  "empresa": "uuid_empresa"
+}
+---
+
+---
+
+### Eliminar estado de cliente
+
+**Endpoint:**
+
+DELETE /api/estado-clientes/{id}/
+
+---
+
+**Descripción:**
+
+Permite eliminar un estado de cliente existente.
+
+---
+
+**Headers:**
+
+---
+Authorization: Bearer <access_token>
+---
+
+---
+
+**Respuesta exitosa (204 No Content):**
+
+- No devuelve contenido.
+
+---
+
+---
+
+### Notas
+
+- Todos los estados pertenecen a la empresa del usuario autenticado (multi-tenant).
+- Los estados están ordenados por el campo `orden` y, en caso de empate, por `nombre`.
+- El campo `orden` permite definir el flujo lógico del cliente dentro del CRM.
+- Cada cliente debe tener un estado asociado.
+- Este endpoint se utiliza principalmente para poblar listas desplegables en formularios de clientes.
+
+
+
 ## 👥 Clientes
 
 ---
