@@ -101,7 +101,7 @@ Content-Type: application/json
 
 **Endpoint:**
 
-GET /api/campanas/
+GET /api/campaigns/
 
 ---
 
@@ -142,7 +142,7 @@ Authorization: Bearer <access_token>
 
 **Endpoint:**
 
-POST /api/campanas/
+POST /api/campaigns/
 
 ---
 

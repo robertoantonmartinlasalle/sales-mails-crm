@@ -30,13 +30,13 @@ router.register(r"plantillas", PlantillaEmailViewSet, basename="plantilla")
 Campañas de email.
 
 Endpoints generados:
-- GET     /api/campanas/
-- POST    /api/campanas/
-- GET     /api/campanas/{id}/
-- PUT     /api/campanas/{id}/
-- DELETE  /api/campanas/{id}/
+- GET     /api/campaigns/
+- POST    /api/campaigns/
+- GET     /api/campaigns/{id}/
+- PUT     /api/campaigns/{id}/
+- DELETE  /api/campaigns/{id}/
 """
-router.register(r"campanas", CampanaEmailViewSet, basename="campana")
+router.register(r"campaigns", CampanaEmailViewSet, basename="campana")
 
 """
 Envíos de campañas.
