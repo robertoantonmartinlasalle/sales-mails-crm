@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 from campaigns.models.plantillaemail import PlantillaEmail
 from campaigns.serializers.plantilla_email_serializer import PlantillaEmailSerializer
-
+from users.permissions import PermisosPorRol
 
 class PlantillaEmailViewSet(viewsets.ModelViewSet):
     """
@@ -18,7 +18,7 @@ class PlantillaEmailViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = PlantillaEmailSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermisosPorRol]
 
     def get_queryset(self):
         """

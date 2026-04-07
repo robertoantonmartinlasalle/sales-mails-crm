@@ -10,6 +10,8 @@ from campaigns.serializers.campaign_send_serializer import CampaignSendSerialize
 
 from core.services.email_service import send_email  # Servicio de envío de emails
 
+from users.permissions import PermisosPorRol
+
 
 class CampaignSendViewSet(viewsets.ModelViewSet):
     """
@@ -31,7 +33,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = CampaignSendSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermisosPorRol]
 
     def get_queryset(self):
         """

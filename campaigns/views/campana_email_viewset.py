@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from campaigns.models.campanaemail import CampanaEmail
 from campaigns.serializers.campana_email_serializer import CampanaEmailSerializer
-
+from users.permissions import PermisosPorRol
 
 class CampanaEmailViewSet(viewsets.ModelViewSet):
     """
@@ -19,7 +19,7 @@ class CampanaEmailViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = CampanaEmailSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermisosPorRol]
 
     def get_queryset(self):
         """

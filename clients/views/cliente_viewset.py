@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from clients.models import Cliente
 from clients.serializers.cliente_serializer import ClienteSerializer
+from users.permissions import PermisosPorRol
 
 
 class ClienteViewSet(viewsets.ModelViewSet):
@@ -20,7 +21,7 @@ class ClienteViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = ClienteSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermisosPorRol]
 
     def get_queryset(self):
         """

@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from clients.models import EstadoCliente
 from clients.serializers.estado_cliente_serializer import EstadoClienteSerializer
+from users.permissions import PermisosPorRol
 
 
 class EstadoClienteViewSet(viewsets.ModelViewSet):
@@ -13,7 +14,7 @@ class EstadoClienteViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = EstadoClienteSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermisosPorRol]
 
     def get_queryset(self):
         """
