@@ -12,7 +12,7 @@ proyecto.
 
 from pathlib import Path
 import environ
-from datetime import timedelta  # 🔐 Necesario para configurar JWT
+from datetime import timedelta  #  Necesario para configurar JWT
 
 
 # =========================================================
@@ -51,6 +51,7 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 INSTALLED_APPS = [
     # Aplicaciones internas de Django
+     'jazzmin',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -239,4 +240,26 @@ SIMPLE_JWT = {
     # IMPORTANTE:
     # De momento NO cambiamos el campo de login (username/email)
     # Esto lo haremos en el siguiente paso con un serializer custom
+}
+
+
+# =========================================================
+# Personalización Admin
+# =========================================================
+
+JAZZMIN_SETTINGS = {
+    "site_title": "CRM Admin",
+    "site_header": "Sales CRM",
+    "site_brand": "CRM",
+    "welcome_sign": "Bienvenido al panel de administración",
+
+    # =========================================================
+    # ORDEN DEL MENÚ LATERAL
+    # =========================================================
+    "order_with_respect_to": [
+        "core",        
+        "users",        
+        "clients",      
+        "campaigns",    
+    ],
 }

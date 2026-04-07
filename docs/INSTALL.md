@@ -52,6 +52,7 @@ pip install django-environ
 pip install djangorestframework
 pip install django-cors-headers
 pip install djangorestframework-simplejwt
+pip install django-jazzmin
 ```
 Guardar dependencias:
 
