@@ -86,7 +86,7 @@ class CampaignSendSerializer(serializers.ModelSerializer):
 
         Se asigna automáticamente en el backend.
         """
-        read_only_fields = ["empresa"]
+        read_only_fields = ["empresa", "error_mensaje"]
 
     def validate(self, data):
         """

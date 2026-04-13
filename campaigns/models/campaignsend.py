@@ -62,5 +62,17 @@ class CampaignSend(TenantModel):
         blank=True
     )
 
+    """
+    Mensaje de error en caso de fallo en el envío.
+
+    Se rellena automáticamente cuando el envío falla,
+    con el mensaje de la excepción capturada.
+    Permite diagnosticar problemas sin necesidad de revisar logs.
+    """
+    error_mensaje = models.TextField(
+        null=True,
+        blank=True
+    )
+
     def __str__(self):
         return f"{self.cliente.email} - {self.estado}"
