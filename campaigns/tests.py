@@ -325,7 +325,7 @@ class CampaignSendEnviarTests(BaseCampanasTest):
     def _url_enviar(self):
         return f"/api/campaign-sends/{self.envio.id}/enviar/"
 
-    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=True)
+    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=(True, None))
     def test_enviar_email_exitoso(self, mock_send):
         self.autenticar_admin()
         response = self.client.post(self._url_enviar(), format="json")
@@ -334,9 +334,10 @@ class CampaignSendEnviarTests(BaseCampanasTest):
         self.envio.refresh_from_db()
         self.assertEqual(self.envio.estado, "enviado")
         self.assertIsNotNone(self.envio.fecha_envio)
+        self.assertIsNone(self.envio.error_mensaje)
         mock_send.assert_called_once()
 
-    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=False)
+    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=(False, "Connection refused"))
     def test_enviar_email_con_error_de_envio(self, mock_send):
         self.autenticar_admin()
         response = self.client.post(self._url_enviar(), format="json")
@@ -344,8 +345,9 @@ class CampaignSendEnviarTests(BaseCampanasTest):
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.envio.refresh_from_db()
         self.assertEqual(self.envio.estado, "error")
+        self.assertEqual(self.envio.error_mensaje, "Connection refused")
 
-    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=True)
+    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=(True, None))
     def test_no_se_puede_reenviar_email_ya_enviado(self, mock_send):
         self.envio.estado = "enviado"
         self.envio.save()
@@ -384,7 +386,7 @@ class CampaignSendEnviarMasivoTests(BaseCampanasTest):
             estado="pendiente",
         )
 
-    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=True)
+    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=(True, None))
     def test_enviar_masivo_marca_todos_como_enviados(self, mock_send):
         self.autenticar_admin()
         response = self.client.post(self.URL_MASIVO, format="json")
@@ -396,7 +398,7 @@ class CampaignSendEnviarMasivoTests(BaseCampanasTest):
         self.assertEqual(self.envio1.estado, "enviado")
         self.assertEqual(self.envio2.estado, "enviado")
 
-    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=True)
+    @patch("campaigns.views.campaign_send_viewset.send_email", return_value=(True, None))
     def test_enviar_masivo_no_procesa_envios_ya_enviados(self, mock_send):
         self.envio1.estado = "enviado"
         self.envio1.save()

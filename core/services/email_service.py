@@ -7,7 +7,7 @@ def send_email(
     subject: str,
     message: str,
     from_email: str | None = None,
-) -> bool:
+) -> tuple[bool, str | None]:
 
     """
     Servicio centralizado para el envío de emails dentro del sistema.
@@ -42,9 +42,9 @@ def send_email(
             (EMAIL_HOST_USER, cargado desde el archivo .env).
 
     Retorna:
-        bool:
-            - True → el email se ha enviado correctamente
-            - False → ha ocurrido algún error en el envío
+        tuple[bool, str | None]:
+            - (True, None) → el email se ha enviado correctamente
+            - (False, "mensaje de error") → ha ocurrido algún error en el envío
     """
 
     """
@@ -97,8 +97,10 @@ def send_email(
         """
         Si no se produce ninguna excepción, consideramos que el envío
         se ha realizado correctamente.
+
+        Devolvemos (True, None) → éxito, sin mensaje de error.
         """
-        return True
+        return True, None
 
     except Exception as e:
         """
@@ -111,7 +113,7 @@ def send_email(
         - Persistencia de errores en base de datos
         - Monitorización del estado de los envíos
 
-        De momento, mostramos el error por consola para facilitar el debugging.
+        Devolvemos (False, mensaje) → fallo, con la causa del error.
         """
         print(f"Error enviando email: {e}")
-        return False
+        return False, str(e)

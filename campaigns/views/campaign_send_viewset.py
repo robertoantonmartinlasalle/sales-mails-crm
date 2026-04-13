@@ -94,7 +94,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         )
 
         # Enviamos email
-        enviado = send_email(
+        enviado, error_msg = send_email(
             to=envio.cliente.email,
             subject=plantilla.asunto,
             message=mensaje
@@ -103,6 +103,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         # Si falla
         if not enviado:
             envio.estado = "error"
+            envio.error_mensaje = error_msg
             envio.save()
 
             return Response(
@@ -113,6 +114,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         # Si todo OK
         envio.estado = "enviado"
         envio.fecha_envio = timezone.now()
+        envio.error_mensaje = None
         envio.save()
 
         return Response(
@@ -160,7 +162,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
                 envio.cliente.nombre
             )
 
-            enviado_ok = send_email(
+            enviado_ok, error_msg = send_email(
                 to=envio.cliente.email,
                 subject=plantilla.asunto,
                 message=mensaje
@@ -169,9 +171,11 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
             if enviado_ok:
                 envio.estado = "enviado"
                 envio.fecha_envio = timezone.now()
+                envio.error_mensaje = None
                 enviados += 1
             else:
                 envio.estado = "error"
+                envio.error_mensaje = error_msg
                 errores += 1
 
             envio.save()
