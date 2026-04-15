@@ -18,7 +18,7 @@ DRF generará automáticamente:
 router = DefaultRouter()
 
 router.register(
-    r"usuarios",
+    r"users",
     UsuarioViewSet,
     basename="usuario"
 )
