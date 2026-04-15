@@ -8,7 +8,7 @@ from django.utils import timezone
 from campaigns.models.campaignsend import CampaignSend
 from campaigns.serializers.campaign_send_serializer import CampaignSendSerializer
 
-from core.services.email_service import send_email  # Servicio de envío de emails
+from core.services.email_service import send_email
 
 from users.permissions import PermisosPorRol
 
@@ -22,14 +22,14 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
     Permite:
     - Listar envíos
     - Crear envíos
-    - Editar estado del envío
+    - Editar envíos
     - Eliminar envíos
-
-    Todo filtrado por empresa (multiempresa).
+    - Cada usuario solo ve los envíos de su empresa
+    - Filtrado automático con TenantManager
 
     Además incluye:
-    - Envío individual (1 cliente)
-    - Envío masivo (todos los pendientes)
+    - Envío individual
+    - Envío masivo
     """
 
     serializer_class = CampaignSendSerializer
@@ -37,10 +37,12 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Devolvemos únicamente los envíos
-        de la empresa del usuario autenticado.
 
-        Esto garantiza aislamiento multiempresa.
+        Filtramos todos los envíos por empresa.
+
+        Usamos TenantManager para:
+        - Evitar accesos cruzados
+        - Añadir trazabilidad mediante logs
         """
         return CampaignSend.objects.for_empresa(
             self.request.user.empresa
@@ -48,10 +50,10 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        Asignamos automáticamente la empresa.
 
-        El usuario NO puede definirla manualmente,
-        se obtiene del usuario autenticado.
+        Asignamos automáticamente la empresa del usuario autenticado.
+
+        Nunca permitimos que el cliente la envíe.
         """
         serializer.save(
             empresa=self.request.user.empresa
@@ -60,47 +62,53 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
     # =========================================================
     # ENVÍO INDIVIDUAL
     # =========================================================
-    @action(detail=True, methods=["post"], url_path="enviar")
+    @action(detail=True, methods=["post"], url_path="send")
     def enviar(self, request, pk=None):
         """
         Acción personalizada para enviar UNA campaña a UN cliente.
 
         Flujo:
 
-        1. Obtener el envío
-        2. Validar que esté en estado "pendiente"
-        3. Obtener plantilla asociada a la campaña
+        1. Obtener envío
+        2. Validar estado
+        3. Validar email del cliente
         4. Construir mensaje dinámico
-        5. Enviar email real
-        6. Actualizar estado y fecha
+        5. Enviar email
+        6. Actualizar estado
         """
 
         envio = self.get_object()
 
-        # Solo permitir envío si está pendiente
+        # Solo permitir si está pendiente
         if envio.estado != "pendiente":
             return Response(
                 {"error": "Este envío ya fue procesado."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Obtenemos plantilla
+        # Validar email
+        if not envio.cliente or not envio.cliente.email:
+            return Response(
+                {"error": "El cliente no tiene email válido."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         plantilla = envio.campana.plantilla
 
-        # Construimos mensaje dinámico
+        # Construcción del mensaje dinámico
         mensaje = plantilla.cuerpo.replace(
             "{{nombre}}",
             envio.cliente.nombre
         )
 
-        # Enviamos email
+        # Envío real
         enviado, error_msg = send_email(
             to=envio.cliente.email,
             subject=plantilla.asunto,
             message=mensaje
         )
 
-        # Si falla
+        # Manejo de error
         if not enviado:
             envio.estado = "error"
             envio.error_mensaje = error_msg
@@ -111,7 +119,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        # Si todo OK
+        # ✔️ Éxito
         envio.estado = "enviado"
         envio.fecha_envio = timezone.now()
         envio.error_mensaje = None
@@ -123,26 +131,23 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         )
 
     # =========================================================
-    # ENVÍO MASIVO 
+    # ENVÍO MASIVO
     # =========================================================
-    @action(detail=False, methods=["post"], url_path="enviar-masivo")
+    @action(detail=False, methods=["post"], url_path="send-bulk")
     def enviar_masivo(self, request):
         """
         Acción personalizada para enviar TODAS las campañas pendientes.
 
-        IMPORTANTE:
-        - Este endpoint se registra como:
-          /api/campaign-sends/enviar-masivo/
-        - Solo acepta POST
+        Endpoint:
+        POST /api/campaign-sends/send-bulk/
 
         Flujo:
 
-        1. Obtener todos los envíos pendientes de la empresa
-        2. Iterar sobre cada envío
-        3. Construir mensaje dinámico
-        4. Enviar email
-        5. Actualizar estado (enviado / error)
-        6. Devolver resumen
+        1. Obtener envíos pendientes
+        2. Iterar sobre cada uno
+        3. Enviar email
+        4. Actualizar estado
+        5. Devolver resumen
         """
 
         envios = CampaignSend.objects.for_empresa(
@@ -154,6 +159,14 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         errores = 0
 
         for envio in envios:
+
+            # Validar email antes de enviar
+            if not envio.cliente or not envio.cliente.email:
+                envio.estado = "error"
+                envio.error_mensaje = "Cliente sin email válido"
+                envio.save()
+                errores += 1
+                continue
 
             plantilla = envio.campana.plantilla
 

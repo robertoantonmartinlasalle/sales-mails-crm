@@ -8,7 +8,7 @@ class PlantillaEmailSimpleSerializer(serializers.ModelSerializer):
     Serializer simplificado de PlantillaEmail.
 
     Se utiliza para mostrar información básica de la plantilla
-    dentro de la campaña (mejora de la respuesta de la API).
+    dentro de la campaña.
     """
 
     class Meta:
@@ -23,15 +23,10 @@ class CampanaEmailSerializer(serializers.ModelSerializer):
     Se encarga de:
 
     - Convertir datos JSON <-> modelo CampanaEmail
-    - Validar relaciones (plantilla)
-    - Proteger el campo empresa (multiempresa)
-    - Mejorar la representación de datos para el frontend
+    - Validar que la plantilla pertenece a la empresa
+    - Garantizar aislamiento multiempresa
     """
 
-    """
-    Campo adicional para mostrar información detallada
-    de la plantilla asociada.
-    """
     plantilla_detalle = PlantillaEmailSimpleSerializer(
         source="plantilla",
         read_only=True
@@ -39,35 +34,35 @@ class CampanaEmailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CampanaEmail
-
-        """
-        Incluimos todos los campos del modelo.
-        """
         fields = "__all__"
-
-        """
-        La empresa NO puede venir desde el frontend.
-
-        Se asigna automáticamente en el backend usando:
-            serializer.save(empresa=request.user.empresa)
-        """
         read_only_fields = ["empresa"]
 
     def validate(self, data):
         """
         Validación personalizada.
 
-        Comprobamos que:
-
+        Reglas:
         - La plantilla es obligatoria
-        - (Preparado para futuras validaciones multiempresa)
+        - La plantilla debe pertenecer a la misma empresa
         """
 
+        request = self.context.get("request")
+
+        if not request:
+            return data
+
+        empresa = request.user.empresa
         plantilla = data.get("plantilla")
 
         if not plantilla:
             raise serializers.ValidationError(
                 "La plantilla es obligatoria para crear una campaña."
+            )
+
+        # VALIDACIÓN MULTIEMPRESA (CLAVE)
+        if plantilla.empresa != empresa:
+            raise serializers.ValidationError(
+                "La plantilla no pertenece a tu empresa."
             )
 
         return data

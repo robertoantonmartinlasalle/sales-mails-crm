@@ -10,32 +10,50 @@ class PlantillaEmailSerializer(serializers.ModelSerializer):
 
     - Convertir datos JSON <-> modelo PlantillaEmail
     - Validar los datos antes de guardar
-    - Definir qué campos se exponen en la API
+    - Garantizar integridad en entorno multiempresa
     """
 
     class Meta:
         model = PlantillaEmail
-
-        """
-        Usamos todos los campos del modelo.
-        """
         fields = "__all__"
+
+        # La empresa no se envía desde el cliente
+        # Se asigna automáticamente en la vista
+        read_only_fields = ["empresa"]
 
     def validate(self, data):
         """
         Validación personalizada.
 
-        Aquí podríamos añadir reglas de negocio en el futuro,
-        como evitar nombres duplicados o validar longitud del contenido.
+        Reglas:
+        - Campos obligatorios
+        - Evitar nombres duplicados dentro de la misma empresa
         """
 
-        nombre = data.get("nombre")
-        asunto = data.get("asunto")
-        cuerpo = data.get("cuerpo")
+        request = self.context.get("request")
 
-        """
-        Validaciones básicas para evitar datos vacíos.
-        """
+        if not request:
+            return data
+
+        empresa = request.user.empresa
+
+        # Soporte CREATE / UPDATE / PATCH
+        nombre = data.get(
+            "nombre",
+            self.instance.nombre if self.instance else None
+        )
+
+        asunto = data.get(
+            "asunto",
+            self.instance.asunto if self.instance else None
+        )
+
+        cuerpo = data.get(
+            "cuerpo",
+            self.instance.cuerpo if self.instance else None
+        )
+
+        # Validaciones básicas
         if not nombre:
             raise serializers.ValidationError(
                 "El nombre de la plantilla es obligatorio."
@@ -49,6 +67,19 @@ class PlantillaEmailSerializer(serializers.ModelSerializer):
         if not cuerpo:
             raise serializers.ValidationError(
                 "El cuerpo del email no puede estar vacío."
+            )
+
+        # VALIDACIÓN MULTIEMPRESA
+        qs = PlantillaEmail.objects.for_empresa(empresa).filter(
+            nombre=nombre
+        )
+
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if qs.exists():
+            raise serializers.ValidationError(
+                "Ya existe una plantilla con ese nombre en tu empresa."
             )
 
         return data
