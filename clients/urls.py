@@ -13,14 +13,14 @@ router = DefaultRouter()
 
 # Endpoint: /api/estado-clientes/
 router.register(
-    r"estado-clientes",
+    r"client-status",
     EstadoClienteViewSet,
     basename="estado-cliente"
 )
 
 # Endpoint: /api/clientes/
 router.register(
-    r"clientes",
+    r"clients",
     ClienteViewSet,
     basename="cliente"
 )

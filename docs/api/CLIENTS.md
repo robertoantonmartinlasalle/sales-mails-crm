@@ -1,12 +1,12 @@
-##  Estados de cliente
+## Client Statuses
 
 ---
 
-### Listar estados de cliente
+### List client statuses
 
 **Endpoint:**
 
-GET /api/estado-clientes/
+GET /api/client-status/
 
 ---
 
@@ -23,65 +23,67 @@ Los datos se filtran automáticamente por empresa (multi-tenant), evitando que u
 **Headers:**
 
 ---
-Authorization: Bearer <access_token>
----
+
+## Authorization: Bearer <access_token>
 
 ---
 
 **Parámetros:**
 
-- No requiere parámetros obligatorios.
+* No requiere parámetros obligatorios.
 
 ---
 
 **Respuesta exitosa (200 OK):**
 
 ---
+
 [
-  {
-    "id": 8,
-    "nombre": "Nuevo",
-    "descripcion": "Cliente recién creado en el sistema",
-    "orden": 1,
-    "empresa": "uuid_empresa"
-  },
-  {
-    "id": 9,
-    "nombre": "Contactado",
-    "descripcion": "Se ha establecido contacto inicial",
-    "orden": 2,
-    "empresa": "uuid_empresa"
-  }
+{
+"id": 8,
+"nombre": "Nuevo",
+"descripcion": "Cliente recién creado en el sistema",
+"orden": 1,
+"empresa": "uuid_empresa"
+},
+{
+"id": 9,
+"nombre": "Contactado",
+"descripcion": "Se ha establecido contacto inicial",
+"orden": 2,
+"empresa": "uuid_empresa"
+}
 ]
----
+-
 
 ---
 
 **Descripción de la respuesta:**
 
-- Se devuelve una lista de estados de cliente.
-- Cada estado define una fase dentro del flujo comercial.
-- Todos los estados pertenecen a la empresa del usuario autenticado.
+* Se devuelve una lista de estados de cliente.
+* Cada estado define una fase dentro del flujo comercial.
+* Todos los estados pertenecen a la empresa del usuario autenticado.
 
 ---
 
 **Errores posibles:**
 
-- **401 Unauthorized**
+* **401 Unauthorized**
 
 ---
+
 {
-  "detail": "Authentication credentials were not provided."
+"detail": "Authentication credentials were not provided."
 }
----
+-
 
 ---
 
-### Crear estado de cliente
+### Create client status
 
 **Endpoint:**
 
-POST /api/estado-clientes/
+POST /api/client-status/
 
 ---
 
@@ -89,7 +91,7 @@ POST /api/estado-clientes/
 
 Permite crear un nuevo estado de cliente asociado a la empresa del usuario autenticado.
 
-La empresa se asigna automáticamente a partir del usuario autenticado, por lo que no es necesario enviarla en la petición.
+La empresa se asigna automáticamente en el backend a partir del usuario autenticado, por lo que no es necesario enviarla en la petición.
 
 Este endpoint permite personalizar el flujo de clientes dentro del CRM.
 
@@ -98,63 +100,68 @@ Este endpoint permite personalizar el flujo de clientes dentro del CRM.
 **Headers:**
 
 ---
-Authorization: Bearer <access_token>  
+
+Authorization: Bearer <access_token>
 Content-Type: application/json
----
+------------------------------
 
 ---
 
 **Body (request):**
 
 ---
+
 {
-  "nombre": "Cliente activo",
-  "descripcion": "Cliente con relación activa",
-  "orden": 3
+"nombre": "Cliente activo",
+"descripcion": "Cliente con relación activa",
+"orden": 3
 }
----
+-
 
 ---
 
 **Respuesta exitosa (201 Created):**
 
 ---
+
 {
-  "id": 10,
-  "nombre": "Cliente activo",
-  "descripcion": "Cliente con relación activa",
-  "orden": 3,
-  "empresa": "uuid_empresa"
+"id": 10,
+"nombre": "Cliente activo",
+"descripcion": "Cliente con relación activa",
+"orden": 3,
+"empresa": "uuid_empresa"
 }
----
+-
 
 ---
 
 **Errores posibles:**
 
-- **400 Bad Request**
+* **400 Bad Request**
 
 ---
+
 {
-  "nombre": ["Este campo es obligatorio."]
+"nombre": ["Este campo es obligatorio."]
 }
+-
+
+* **401 Unauthorized**
+
 ---
 
-- **401 Unauthorized**
-
----
 {
-  "detail": "Authentication credentials were not provided."
+"detail": "Authentication credentials were not provided."
 }
----
+-
 
 ---
 
-### Obtener detalle de estado de cliente
+### Retrieve client status
 
 **Endpoint:**
 
-GET /api/estado-clientes/{id}/
+GET /api/client-status/{id}/
 
 ---
 
@@ -169,30 +176,31 @@ El estado debe pertenecer a la empresa del usuario autenticado.
 **Headers:**
 
 ---
-Authorization: Bearer <access_token>
----
+
+## Authorization: Bearer <access_token>
 
 ---
 
 **Respuesta exitosa (200 OK):**
 
 ---
+
 {
-  "id": 8,
-  "nombre": "Nuevo",
-  "descripcion": "Cliente recién creado en el sistema",
-  "orden": 1,
-  "empresa": "uuid_empresa"
+"id": 8,
+"nombre": "Nuevo",
+"descripcion": "Cliente recién creado en el sistema",
+"orden": 1,
+"empresa": "uuid_empresa"
 }
----
+-
 
 ---
 
-### Actualizar estado de cliente
+### Update client status
 
 **Endpoint:**
 
-PUT /api/estado-clientes/{id}/
+PUT /api/client-status/{id}/
 
 ---
 
@@ -205,43 +213,46 @@ Permite actualizar todos los datos de un estado de cliente existente.
 **Headers:**
 
 ---
-Authorization: Bearer <access_token>  
+
+Authorization: Bearer <access_token>
 Content-Type: application/json
----
+------------------------------
 
 ---
 
 **Body (request):**
 
 ---
+
 {
-  "nombre": "Lead",
-  "descripcion": "Primer contacto comercial",
-  "orden": 1
+"nombre": "Lead",
+"descripcion": "Primer contacto comercial",
+"orden": 1
 }
----
+-
 
 ---
 
 **Respuesta exitosa (200 OK):**
 
 ---
+
 {
-  "id": 8,
-  "nombre": "Lead",
-  "descripcion": "Primer contacto comercial",
-  "orden": 1,
-  "empresa": "uuid_empresa"
+"id": 8,
+"nombre": "Lead",
+"descripcion": "Primer contacto comercial",
+"orden": 1,
+"empresa": "uuid_empresa"
 }
----
+-
 
 ---
 
-### Eliminar estado de cliente
+### Delete client status
 
 **Endpoint:**
 
-DELETE /api/estado-clientes/{id}/
+DELETE /api/client-status/{id}/
 
 ---
 
@@ -254,14 +265,14 @@ Permite eliminar un estado de cliente existente.
 **Headers:**
 
 ---
-Authorization: Bearer <access_token>
----
+
+## Authorization: Bearer <access_token>
 
 ---
 
 **Respuesta exitosa (204 No Content):**
 
-- No devuelve contenido.
+* No devuelve contenido.
 
 ---
 
@@ -269,23 +280,23 @@ Authorization: Bearer <access_token>
 
 ### Notas
 
-- Todos los estados pertenecen a la empresa del usuario autenticado (multi-tenant).
-- Los estados están ordenados por el campo `orden` y, en caso de empate, por `nombre`.
-- El campo `orden` permite definir el flujo lógico del cliente dentro del CRM.
-- Cada cliente debe tener un estado asociado.
-- Este endpoint se utiliza principalmente para poblar listas desplegables en formularios de clientes.
-
-
-
-## 👥 Clientes
+* Todos los estados pertenecen a la empresa del usuario autenticado (multi-tenant).
+* Los estados están ordenados por el campo `orden` y, en caso de empate, por `nombre`.
+* El campo `orden` permite definir el flujo lógico del cliente dentro del CRM.
+* Cada cliente debe tener un estado asociado.
+* Este endpoint se utiliza principalmente para poblar listas desplegables en formularios de clientes.
 
 ---
 
-### Listar clientes
+## 👥 Clients
+
+---
+
+### List clients
 
 **Endpoint:**
 
-GET /api/clientes/
+GET /api/clients/
 
 ---
 
@@ -302,59 +313,61 @@ Los datos se filtran automáticamente por empresa (multi-tenant), evitando que u
 **Headers:**
 
 ---
-Authorization: Bearer <access_token>
----
+
+## Authorization: Bearer <access_token>
 
 ---
 
 **Parámetros:**
 
-- No requiere parámetros obligatorios.
+* No requiere parámetros obligatorios.
 
 ---
 
 **Respuesta exitosa (200 OK):**
 
 ---
+
 [
-  {
-    "id": "uuid_cliente",
-    "nombre": "Nombre del cliente",
-    "email": "cliente@email.com",
-    "telefono": "600000000",
-    "empresa": "uuid_empresa",
-    "estado_cliente": 1
-  }
+{
+"id": "uuid_cliente",
+"nombre": "Nombre del cliente",
+"email": "[cliente@email.com](mailto:cliente@email.com)",
+"telefono": "600000000",
+"empresa": "uuid_empresa",
+"estado_cliente": 1
+}
 ]
----
+-
 
 ---
 
 **Descripción de la respuesta:**
 
-- Se devuelve una lista de clientes.
-- Cada cliente contiene su información básica.
-- Todos los clientes pertenecen a la empresa del usuario autenticado.
+* Se devuelve una lista de clientes.
+* Cada cliente contiene su información básica.
+* Todos los clientes pertenecen a la empresa del usuario autenticado.
 
 ---
 
 **Errores posibles:**
 
-- **401 Unauthorized**
+* **401 Unauthorized**
 
 ---
+
 {
-  "detail": "Authentication credentials were not provided."
+"detail": "Authentication credentials were not provided."
 }
----
+-
 
 ---
 
-### Crear cliente
+### Create client
 
 **Endpoint:**
 
-POST /api/clientes/
+POST /api/clients/
 
 ---
 
@@ -369,70 +382,75 @@ El sistema asigna automáticamente la empresa del usuario, por lo que no es nece
 **Headers:**
 
 ---
+
 Authorization: Bearer <access_token>
 Content-Type: application/json
----
+------------------------------
 
 ---
 
 **Body (request):**
 
 ---
+
 {
-  "nombre": "Juan Pérez García",
-  "tipo": "persona",
-  "email": "juan.perez@example.com",
-  "telefono": "600123456",
-  "direccion": "Calle Gran Vía 12",
-  "ciudad": "Madrid",
-  "pais": "España",
-  "nif": "12345678A",
-  "estado_cliente": 1
+"nombre": "Juan Pérez García",
+"tipo": "persona",
+"email": "[juan.perez@example.com](mailto:juan.perez@example.com)",
+"telefono": "600123456",
+"direccion": "Calle Gran Vía 12",
+"ciudad": "Madrid",
+"pais": "España",
+"nif": "12345678A",
+"estado_cliente": 1
 }
----
+-
 
 ---
 
 **Respuesta exitosa (201 Created):**
 
 ---
+
 {
-  "id": "uuid_cliente",
-  "nombre": "Juan Pérez García",
-  "email": "juan.perez@example.com",
-  "telefono": "600123456",
-  "empresa": "uuid_empresa",
-  "estado_cliente": 1
+"id": "uuid_cliente",
+"nombre": "Juan Pérez García",
+"email": "[juan.perez@example.com](mailto:juan.perez@example.com)",
+"telefono": "600123456",
+"empresa": "uuid_empresa",
+"estado_cliente": 1
 }
----
+-
 
 ---
 
 **Errores posibles:**
 
-- **400 Bad Request**
+* **400 Bad Request**
 
 ---
+
 {
-  "email": ["Este campo es obligatorio."]
+"email": ["Este campo es obligatorio."]
 }
+-
+
+* **401 Unauthorized**
+
 ---
 
-- **401 Unauthorized**
-
----
 {
-  "detail": "Authentication credentials were not provided."
+"detail": "Authentication credentials were not provided."
 }
----
+-
 
 ---
 
-### Obtener detalle de cliente
+### Retrieve client
 
 **Endpoint:**
 
-GET /api/clientes/{id}/
+GET /api/clients/{id}/
 
 ---
 
@@ -447,31 +465,32 @@ El cliente debe pertenecer a la empresa del usuario autenticado.
 **Headers:**
 
 ---
-Authorization: Bearer <access_token>
----
+
+## Authorization: Bearer <access_token>
 
 ---
 
 **Respuesta exitosa (200 OK):**
 
 ---
+
 {
-  "id": "uuid_cliente",
-  "nombre": "Juan Pérez García",
-  "email": "juan.perez@example.com",
-  "telefono": "600123456",
-  "empresa": "uuid_empresa",
-  "estado_cliente": 1
+"id": "uuid_cliente",
+"nombre": "Juan Pérez García",
+"email": "[juan.perez@example.com](mailto:juan.perez@example.com)",
+"telefono": "600123456",
+"empresa": "uuid_empresa",
+"estado_cliente": 1
 }
----
+-
 
 ---
 
-### Actualizar cliente
+### Update client
 
 **Endpoint:**
 
-PUT /api/clientes/{id}/
+PUT /api/clients/{id}/
 
 ---
 
@@ -484,40 +503,43 @@ Permite actualizar todos los datos de un cliente existente.
 **Headers:**
 
 ---
+
 Authorization: Bearer <access_token>
 Content-Type: application/json
----
+------------------------------
 
 ---
 
 **Body (request):**
 
 ---
+
 {
-  "nombre": "Nuevo nombre",
-  "email": "nuevo@email.com"
+"nombre": "Nuevo nombre",
+"email": "[nuevo@email.com](mailto:nuevo@email.com)"
 }
----
+-
 
 ---
 
 **Respuesta exitosa (200 OK):**
 
 ---
+
 {
-  "id": "uuid_cliente",
-  "nombre": "Nuevo nombre",
-  "email": "nuevo@email.com"
+"id": "uuid_cliente",
+"nombre": "Nuevo nombre",
+"email": "[nuevo@email.com](mailto:nuevo@email.com)"
 }
----
+-
 
 ---
 
-### Eliminar cliente
+### Delete client
 
 **Endpoint:**
 
-DELETE /api/clientes/{id}/
+DELETE /api/clients/{id}/
 
 ---
 
@@ -530,185 +552,13 @@ Permite eliminar un cliente existente.
 **Headers:**
 
 ---
-Authorization: Bearer <access_token>
----
+
+## Authorization: Bearer <access_token>
 
 ---
 
 **Respuesta exitosa (204 No Content):**
 
-- No devuelve contenido.
+* No devuelve contenido.
 
 ---
-
----
-
-### Estados de cliente
-
-**Endpoint:**
-
-GET /api/estado-clientes/
-
----
-
-**Descripción:**
-
-Obtiene el listado de estados de cliente disponibles para la empresa del usuario autenticado.
-
-Los estados de cliente se utilizan para clasificar la situación de cada cliente dentro del sistema (por ejemplo: activo, inactivo, perdido, etc.).
-
-Este endpoint está protegido y los datos se filtran automáticamente por empresa (multi-tenant).
-
----
-
-**Headers:**
-
----
-Authorization: Bearer <access_token>
----
-
----
-
-**Parámetros:**
-
-- No requiere parámetros.
-
----
-
-**Respuesta exitosa (200 OK):**
-
----
-[
-  {
-    "id": 1,
-    "nombre": "Lead",
-    "descripcion": "Primer contacto",
-    "orden": 1,
-    "empresa": "uuid_empresa"
-  },
-  {
-    "id": 2,
-    "nombre": "Cliente",
-    "descripcion": "Cliente activo",
-    "orden": 2,
-    "empresa": "uuid_empresa"
-  },
-  {
-    "id": 3,
-    "nombre": "Inactivo",
-    "descripcion": "Cliente sin actividad",
-    "orden": 3,
-    "empresa": "uuid_empresa"
-  }
-]
----
-
----
-
-**Descripción de la respuesta:**
-
-- **id**: Identificador único del estado.
-- **nombre**: Nombre del estado.
-- **descripcion**: Descripción opcional del estado.
-- **orden**: Valor numérico utilizado para ordenar los estados.
-- **empresa**: Identificador de la empresa a la que pertenece el estado.
-
----
-
-**Errores posibles:**
-
-- **401 Unauthorized**
-
----
-{
-  "detail": "Authentication credentials were not provided."
-}
----
-
----
-
-**Notas:**
-
-- Todos los estados devueltos pertenecen a la empresa del usuario autenticado.
-- Los estados están ordenados por el campo `orden` y, en caso de empate, por `nombre`.
-- Cada cliente debe tener siempre un estado asociado.
-- Este endpoint se utiliza normalmente para poblar listas desplegables en formularios de clientes.
-
-### Crear estado de cliente
-
-**Endpoint:**
-
-POST /api/estado-clientes/
-
----
-
-**Descripción:**
-
-Permite crear un nuevo estado de cliente asociado a la empresa del usuario autenticado.
-
-Los estados se utilizan para clasificar la situación de los clientes dentro del CRM (por ejemplo: lead, cliente activo, inactivo, etc.).
-
-La empresa se asigna automáticamente a partir del usuario autenticado.
-
----
-
-**Headers:**
-
----
-Authorization: Bearer <access_token>
-Content-Type: application/json
----
-
----
-
-**Body (request):**
-
----
-{
-  "nombre": "Cliente activo",
-  "descripcion": "Cliente con relación activa",
-  "orden": 2
-}
----
-
----
-
-**Respuesta exitosa (201 Created):**
-
----
-{
-  "id": 2,
-  "nombre": "Cliente activo",
-  "descripcion": "Cliente con relación activa",
-  "orden": 2,
-  "empresa": "uuid_empresa"
-}
----
-
----
-
-**Errores posibles:**
-
-- **400 Bad Request**
-
----
-{
-  "nombre": ["Este campo es obligatorio."]
-}
----
-
-- **401 Unauthorized**
-
----
-{
-  "detail": "Authentication credentials were not provided."
-}
----
-
----
-
-**Notas:**
-
-- El estado se crea siempre dentro de la empresa del usuario autenticado.
-- El campo `orden` permite definir el orden en el que se mostrarán los estados.
-- Este endpoint permite personalizar el flujo de clientes dentro del CRM.
