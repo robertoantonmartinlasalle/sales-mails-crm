@@ -21,7 +21,8 @@ class TenantModel(models.Model):
     empresa = models.ForeignKey(
         "core.Empresa",
         on_delete=models.CASCADE,
-        related_name="%(class)s_items"
+        related_name="%(class)s_items",
+        db_index=True # Para optimización
     )
 
     objects = TenantManager()
