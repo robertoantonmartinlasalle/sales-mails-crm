@@ -25,22 +25,16 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     serializer_class = UsuarioSerializer
 
     # =========================================================
-    # QUERYSET MULTIEMPRESA (AQUÍ USAMOS TENANT MANAGER)
+    # QUERYSET MULTIEMPRESA
     # =========================================================
     def get_queryset(self):
         """
         Filtramos los usuarios por empresa utilizando TenantManager.
 
-        En lugar de hacer:
+        De esta forma evitamos repetir:
             Usuario.objects.filter(empresa=...)
 
-        Usamos:
-            Usuario.objects.for_empresa(...)
-
-        Ventajas:
-        - Código más limpio
-        - Reutilizable en todo el proyecto
-        - Evita errores al repetir lógica
+        Y centralizamos la lógica multiempresa en un solo punto.
 
         IMPORTANTE:
         Esto garantiza que un usuario SOLO vea datos de su empresa.
@@ -56,10 +50,10 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         """
         Definimos permisos según la acción:
 
-        - GET (list, retrieve):
+        - Lectura (list, retrieve):
             → cualquier usuario autenticado
 
-        - POST, PUT, PATCH, DELETE:
+        - Escritura (create, update, delete):
             → solo administradores de empresa
         """
 
@@ -75,26 +69,22 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         """
         Asignamos automáticamente la empresa del usuario autenticado.
 
-        Esto evita que:
-        - El cliente envíe manualmente otra empresa
-        - Se creen usuarios en empresas ajenas
-
-        Es una capa clave de seguridad.
+        Esto evita que el cliente pueda enviar manualmente una empresa distinta,
+        lo que sería un problema de seguridad en un sistema multiempresa.
         """
         serializer.save(
             empresa=self.request.user.empresa
         )
 
     # =========================================================
-    # (OPCIONAL PERO RECOMENDADO) UPDATE SEGURO
+    # UPDATE SEGURO
     # =========================================================
     def perform_update(self, serializer):
         """
-        Nos aseguramos de que la empresa NO se pueda modificar
-        al actualizar un usuario.
+        Nos aseguramos de que la empresa NO se pueda modificar.
 
-        Aunque el campo sea read_only en el serializer,
-        esto añade una capa extra de seguridad.
+        Aunque el campo ya es read_only en el serializer,
+        reforzamos la seguridad desde la vista.
         """
         serializer.save(
             empresa=self.request.user.empresa

@@ -18,7 +18,39 @@ class UsuarioSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "empresa", "fecha_creacion"]
 
+    # =========================================================
+    # VALIDACIÓN DE SEGURIDAD (ROL MULTIEMPRESA)
+    # =========================================================
+    def validate_rol(self, value):
+        """
+        Validamos que el rol seleccionado pertenece a la misma empresa
+        que el usuario autenticado.
+
+        Esto evita que desde el cliente (Postman, frontend, etc.)
+        se pueda asignar un rol de otra empresa, lo cual rompería
+        el aislamiento multiempresa.
+        """
+
+        request = self.context.get("request")
+
+        # Seguridad: comprobamos que el rol pertenece a la misma empresa
+        if value.empresa != request.user.empresa:
+            raise serializers.ValidationError(
+                "El rol seleccionado no pertenece a tu empresa"
+            )
+
+        return value
+
+    # =========================================================
+    # CREACIÓN DE USUARIO
+    # =========================================================
     def create(self, validated_data):
+        """
+        Sobrescribimos la creación para encriptar correctamente la contraseña.
+
+        IMPORTANTE:
+        Nunca guardamos la contraseña en texto plano.
+        """
         password = validated_data.pop("password")
 
         user = Usuario(**validated_data)
