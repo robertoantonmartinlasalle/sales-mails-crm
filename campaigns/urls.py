@@ -18,13 +18,13 @@ router = DefaultRouter()
 Plantillas de email.
 
 Endpoints generados:
-- GET     /api/plantillas/
-- POST    /api/plantillas/
-- GET     /api/plantillas/{id}/
-- PUT     /api/plantillas/{id}/
-- DELETE  /api/plantillas/{id}/
+- GET     /api/templates/
+- POST    /api/templates/
+- GET     /api/templates/{id}/
+- PUT     /api/templates/{id}/
+- DELETE  /api/templates/{id}/
 """
-router.register(r"plantillas", PlantillaEmailViewSet, basename="plantilla")
+router.register(r"templates", PlantillaEmailViewSet, basename="plantilla")
 
 """
 Campañas de email.

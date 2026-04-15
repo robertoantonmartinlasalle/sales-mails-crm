@@ -10,7 +10,7 @@
 
 **Endpoint:**
 
-GET /api/plantillas/
+GET /api/templates/
 
 ---
 
@@ -49,7 +49,7 @@ Authorization: Bearer <access_token>
 
 **Endpoint:**
 
-POST /api/plantillas/
+POST /api/templates/
 
 ---
 
