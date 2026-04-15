@@ -1,11 +1,16 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
 
 # Importamos la vista de refresh de JWT
 from rest_framework_simplejwt.views import TokenRefreshView
 
 
 urlpatterns = [
+
+    # Redirección
+    path('', lambda request: redirect('/admin/')),
+
     path('admin/', admin.site.urls),
 
     # =========================================================
