@@ -296,7 +296,7 @@ Content-Type: application/json
 
 **Endpoint:**
 
-POST /api/campaign-sends/{id}/enviar/
+POST /api/campaign-sends/{id}/send/
 
 ---
 

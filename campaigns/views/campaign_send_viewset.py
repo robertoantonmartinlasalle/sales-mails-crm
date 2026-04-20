@@ -37,7 +37,6 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-
         Filtramos todos los envíos por empresa.
 
         Usamos TenantManager para:
@@ -50,7 +49,6 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-
         Asignamos automáticamente la empresa del usuario autenticado.
 
         Nunca permitimos que el cliente la envíe.
@@ -72,7 +70,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         1. Obtener envío
         2. Validar estado
         3. Validar email del cliente
-        4. Construir mensaje dinámico
+        4. Construir mensaje dinámico (cuerpo + asunto)
         5. Enviar email
         6. Actualizar estado
         """
@@ -95,16 +93,28 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
         plantilla = envio.campana.plantilla
 
+        # =====================================================
         # Construcción del mensaje dinámico
+        # =====================================================
+
+        # Personalizamos el cuerpo del email
         mensaje = plantilla.cuerpo.replace(
             "{{nombre}}",
             envio.cliente.nombre
         )
 
-        # Envío real
+        # Personalizamos el asunto
+        asunto = plantilla.asunto.replace(
+            "{{nombre}}",
+            envio.cliente.nombre
+        )
+
+        # =====================================================
+        # Envío real del email
+        # =====================================================
         enviado, error_msg = send_email(
             to=envio.cliente.email,
-            subject=plantilla.asunto,
+            subject=asunto,   # ahora sí dinámico
             message=mensaje
         )
 
@@ -119,7 +129,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        # ✔️ Éxito
+        # Éxito
         envio.estado = "enviado"
         envio.fecha_envio = timezone.now()
         envio.error_mensaje = None
@@ -145,9 +155,10 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
         1. Obtener envíos pendientes
         2. Iterar sobre cada uno
-        3. Enviar email
-        4. Actualizar estado
-        5. Devolver resumen
+        3. Construir mensaje dinámico
+        4. Enviar email
+        5. Actualizar estado
+        6. Devolver resumen
         """
 
         envios = CampaignSend.objects.for_empresa(
@@ -170,14 +181,27 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
 
             plantilla = envio.campana.plantilla
 
+            # =====================================================
+            # Construcción del mensaje dinámico
+            # =====================================================
+
             mensaje = plantilla.cuerpo.replace(
                 "{{nombre}}",
                 envio.cliente.nombre
             )
 
+            
+            asunto = plantilla.asunto.replace(
+                "{{nombre}}",
+                envio.cliente.nombre
+            )
+
+            # =====================================================
+            # Envío del email
+            # =====================================================
             enviado_ok, error_msg = send_email(
                 to=envio.cliente.email,
-                subject=plantilla.asunto,
+                subject=asunto,   # ahora dinámico
                 message=mensaje
             )
 

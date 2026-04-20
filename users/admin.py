@@ -105,6 +105,35 @@ class UsuarioAdmin(BaseUserAdmin):
     # =========================================================
     # CONFIGURACIÓN PARA USERNAME
     # =========================================================
-    # Indicamos que el identificador es email
     USERNAME_FIELD = "email"
     model = Usuario
+
+    # =========================================================
+    # FILTRADO DE ROLES POR EMPRESA (CLAVE DEL EJERCICIO)
+    # =========================================================
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """
+        Personalizamos el comportamiento del campo ForeignKey 'rol'.
+
+        Django por defecto mostraría TODOS los roles de la base de datos,
+        lo que en un sistema multiempresa provoca:
+
+        - Duplicados visuales (Comercial varias veces)
+        - Posibilidad de asignar roles de otra empresa 
+
+        Solución:
+        Filtramos el queryset para que solo aparezcan los roles
+        pertenecientes a la empresa del usuario autenticado.
+        """
+
+        if db_field.name == "rol":
+            if request.user.is_superuser:
+                # El superusuario puede ver todos los roles del sistema
+                kwargs["queryset"] = Rol.objects.all()
+            else:
+                # SOLO mostramos los roles de su empresa
+                kwargs["queryset"] = Rol.objects.filter(
+                    empresa=request.user.empresa
+                )
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
