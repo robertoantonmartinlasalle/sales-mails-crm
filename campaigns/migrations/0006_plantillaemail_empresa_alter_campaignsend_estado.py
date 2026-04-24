@@ -4,6 +4,14 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def asignar_empresa_a_plantillas(apps, schema_editor):
+    PlantillaEmail = apps.get_model('campaigns', 'PlantillaEmail')
+    Empresa = apps.get_model('core', 'Empresa')
+    empresa = Empresa.objects.first()
+    if empresa:
+        PlantillaEmail.objects.filter(empresa__isnull=True).update(empresa=empresa)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,11 +20,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Paso 1: añadir el campo como nullable
         migrations.AddField(
             model_name='plantillaemail',
             name='empresa',
-            field=models.ForeignKey(default='62a5fb08-f51d-4652-a30a-16e7c4818f0c', on_delete=django.db.models.deletion.CASCADE, related_name='%(class)s_items', to='core.empresa'),
-            preserve_default=False,
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='%(class)s_items', to='core.empresa'),
+        ),
+        # Paso 2: asignar empresa a registros existentes
+        migrations.RunPython(asignar_empresa_a_plantillas, migrations.RunPython.noop),
+        # Paso 3: hacer el campo obligatorio
+        migrations.AlterField(
+            model_name='plantillaemail',
+            name='empresa',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(class)s_items', to='core.empresa'),
         ),
         migrations.AlterField(
             model_name='campaignsend',
