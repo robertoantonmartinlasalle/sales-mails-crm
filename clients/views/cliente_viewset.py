@@ -25,12 +25,12 @@ class ClienteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Devuelve únicamente los clientes de la empresa
+        Devuelve únicamente los clientes activos de la empresa
         del usuario autenticado.
         """
         return Cliente.objects.for_empresa(
             self.request.user.empresa
-        )
+        ).filter(activo=True)
 
     def perform_create(self, serializer):
         """
@@ -79,3 +79,20 @@ class ClienteViewSet(viewsets.ModelViewSet):
             serializer.data,
             status=status.HTTP_201_CREATED
         )
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Soft delete: marca el cliente como inactivo en lugar de borrarlo.
+        Usa update() para evitar cargar el objeto en memoria.
+        Devuelve 404 si no existe o no pertenece a la empresa.
+        """
+        updated = Cliente.objects.filter(
+            id=kwargs["pk"],
+            empresa=self.request.user.empresa,
+            activo=True,
+        ).update(activo=False)
+
+        if not updated:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
