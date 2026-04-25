@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -84,7 +85,7 @@ class ClienteViewSet(viewsets.ModelViewSet):
         """
         Soft delete: marca el cliente como inactivo en lugar de borrarlo.
         Usa update() para evitar cargar el objeto en memoria.
-        Devuelve 404 si no existe o no pertenece a la empresa.
+        Devuelve 404 si no existe, no pertenece a la empresa o ya está inactivo.
         """
         updated = Cliente.objects.filter(
             id=kwargs["pk"],
@@ -96,3 +97,36 @@ class ClienteViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["get"], url_path="inactive")
+    def inactive(self, request):
+        """
+        Devuelve los clientes inactivos (soft deleted) de la empresa.
+        """
+        clientes = Cliente.objects.filter(
+            empresa=request.user.empresa,
+            activo=False,
+        ).order_by("-fecha_creacion")
+        serializer = self.get_serializer(clientes, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], url_path="restore")
+    def restore(self, request, pk=None):
+        """
+        Restaura un cliente inactivo. Devuelve el cliente actualizado.
+        """
+        updated = Cliente.objects.filter(
+            id=pk,
+            empresa=request.user.empresa,
+            activo=False,
+        ).update(activo=True)
+
+        if not updated:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        cliente = Cliente.objects.get(
+            id=pk,
+            empresa=request.user.empresa,
+        )
+        serializer = self.get_serializer(cliente)
+        return Response(serializer.data, status=status.HTTP_200_OK)
