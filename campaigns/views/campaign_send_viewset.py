@@ -8,6 +8,9 @@ from django.utils import timezone
 from campaigns.models.campaignsend import CampaignSend
 from campaigns.serializers.campaign_send_serializer import CampaignSendSerializer
 
+from clients.models import Cliente
+from clients.models.actividad_cliente import ActividadCliente
+
 from core.services.email_service import send_email
 
 from users.permissions import PermisosPorRol
@@ -225,3 +228,93 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK
         )
+
+    # =========================================================
+    # ENVÍO DIRECTO (sin campaña previa)
+    # =========================================================
+    @action(detail=False, methods=["post"], url_path="send-direct")
+    def send_direct(self, request):
+        """
+        Envía un email directo a una lista de clientes sin necesidad
+        de crear una CampanaEmail previamente.
+
+        Endpoint:
+            POST /api/campaign-sends/send-direct/
+
+        Payload:
+            {
+                "cliente_ids": [1, 2, 3],
+                "asunto": "...",
+                "mensaje": "..."
+            }
+
+        Validaciones:
+            - cliente_ids, asunto y mensaje son obligatorios
+            - Los clientes deben pertenecer a la empresa del usuario
+            - Los clientes deben estar activos
+            - El cliente debe tener email
+
+        Respuesta:
+            {
+                "total": N,
+                "enviados": N,
+                "errores": [{"cliente_id": X, "error": "..."}]
+            }
+        """
+        cliente_ids = request.data.get("cliente_ids", [])
+        asunto = request.data.get("asunto", "").strip()
+        mensaje = request.data.get("mensaje", "").strip()
+
+        if not cliente_ids or not asunto or not mensaje:
+            return Response(
+                {"error": "cliente_ids, asunto y mensaje son obligatorios"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        clientes = Cliente.objects.filter(
+            id__in=cliente_ids,
+            empresa=request.user.empresa,
+            activo=True,
+        )
+
+        total = len(cliente_ids)
+        enviados = 0
+        errores = []
+
+        for cliente in clientes:
+            if not cliente.email:
+                errores.append({
+                    "cliente_id": cliente.id,
+                    "error": "Cliente sin email",
+                })
+                continue
+
+            # Personalizamos {{nombre}} si aparece en el mensaje
+            mensaje_personalizado = mensaje.replace("{{nombre}}", cliente.nombre)
+
+            ok, error_msg = send_email(
+                to=cliente.email,
+                subject=asunto,
+                message=mensaje_personalizado,
+            )
+
+            if ok:
+                enviados += 1
+                ActividadCliente.objects.create(
+                    cliente=cliente,
+                    empresa=cliente.empresa,
+                    usuario=request.user,
+                    tipo="email_enviado",
+                    descripcion=f"Email enviado: '{asunto}'",
+                )
+            else:
+                errores.append({
+                    "cliente_id": cliente.id,
+                    "error": error_msg,
+                })
+
+        return Response({
+            "total": total,
+            "enviados": enviados,
+            "errores": errores,
+        }, status=status.HTTP_200_OK)
