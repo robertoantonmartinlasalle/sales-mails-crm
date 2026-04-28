@@ -11,6 +11,7 @@ class ActividadCliente(TenantModel):
         ("estado_cambiado", "Estado cambiado"),
         ("cliente_eliminado", "Cliente eliminado"),
         ("cliente_restaurado", "Cliente restaurado"),
+        ("email_enviado", "Email enviado"),
     ]
 
     cliente = models.ForeignKey(
