@@ -4,8 +4,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from clients.models import Cliente
+from clients.models.actividad_cliente import ActividadCliente
 from clients.serializers.cliente_serializer import ClienteSerializer
+from clients.serializers.actividad_cliente_serializer import ActividadClienteSerializer
 from users.permissions import PermisosPorRol
+
+
+def _registrar_actividad(cliente, usuario, tipo, descripcion):
+    ActividadCliente.objects.create(
+        cliente=cliente,
+        empresa=cliente.empresa,
+        usuario=usuario,
+        tipo=tipo,
+        descripcion=descripcion,
+    )
 
 
 class ClienteViewSet(viewsets.ModelViewSet):
@@ -38,8 +50,14 @@ class ClienteViewSet(viewsets.ModelViewSet):
         Asigna automáticamente la empresa del usuario autenticado
         al crear un cliente.
         """
-        serializer.save(
+        cliente = serializer.save(
             empresa=self.request.user.empresa
+        )
+        _registrar_actividad(
+            cliente=cliente,
+            usuario=self.request.user,
+            tipo="cliente_creado",
+            descripcion=f"Cliente '{cliente.nombre}' creado.",
         )
 
     def create(self, request, *args, **kwargs):
@@ -84,19 +102,71 @@ class ClienteViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """
         Soft delete: marca el cliente como inactivo en lugar de borrarlo.
-        Usa update() para evitar cargar el objeto en memoria.
         Devuelve 404 si no existe, no pertenece a la empresa o ya está inactivo.
         """
-        updated = Cliente.objects.filter(
-            id=kwargs["pk"],
-            empresa=self.request.user.empresa,
-            activo=True,
-        ).update(activo=False)
-
-        if not updated:
+        try:
+            cliente = Cliente.objects.get(
+                id=kwargs["pk"],
+                empresa=request.user.empresa,
+                activo=True,
+            )
+        except Cliente.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
+        cliente.activo = False
+        cliente.save(update_fields=["activo"])
+
+        _registrar_actividad(
+            cliente=cliente,
+            usuario=request.user,
+            tipo="cliente_eliminado",
+            descripcion=f"Cliente '{cliente.nombre}' marcado como inactivo.",
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Actualiza el cliente. Si cambia estado_cliente, registra actividad específica.
+        En cualquier otro cambio, registra actividad genérica de actualización.
+        """
+        partial = kwargs.pop("partial", False)
+
+        try:
+            cliente = Cliente.objects.get(
+                id=kwargs["pk"],
+                empresa=request.user.empresa,
+            )
+        except Cliente.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        estado_anterior = cliente.estado_cliente
+
+        serializer = self.get_serializer(cliente, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        cliente_actualizado = serializer.save()
+
+        estado_nuevo = cliente_actualizado.estado_cliente
+
+        if estado_anterior != estado_nuevo:
+            _registrar_actividad(
+                cliente=cliente_actualizado,
+                usuario=request.user,
+                tipo="estado_cambiado",
+                descripcion=(
+                    f"Estado cambiado de '{estado_anterior.nombre}' "
+                    f"a '{estado_nuevo.nombre}'."
+                ),
+            )
+        else:
+            _registrar_actividad(
+                cliente=cliente_actualizado,
+                usuario=request.user,
+                tipo="cliente_actualizado",
+                descripcion=f"Cliente '{cliente_actualizado.nombre}' actualizado.",
+            )
+
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="inactive")
     def inactive(self, request):
@@ -115,18 +185,42 @@ class ClienteViewSet(viewsets.ModelViewSet):
         """
         Restaura un cliente inactivo. Devuelve el cliente actualizado.
         """
-        updated = Cliente.objects.filter(
-            id=pk,
-            empresa=request.user.empresa,
-            activo=False,
-        ).update(activo=True)
-
-        if not updated:
+        try:
+            cliente = Cliente.objects.get(
+                id=pk,
+                empresa=request.user.empresa,
+                activo=False,
+            )
+        except Cliente.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        cliente = Cliente.objects.get(
-            id=pk,
-            empresa=request.user.empresa,
+        cliente.activo = True
+        cliente.save(update_fields=["activo"])
+
+        _registrar_actividad(
+            cliente=cliente,
+            usuario=request.user,
+            tipo="cliente_restaurado",
+            descripcion=f"Cliente '{cliente.nombre}' restaurado.",
         )
+
         serializer = self.get_serializer(cliente)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="activity")
+    def activity(self, request, pk=None):
+        """
+        Devuelve el historial de actividad de un cliente, ordenado por fecha descendente.
+        """
+        if not Cliente.objects.filter(
+            id=pk,
+            empresa=request.user.empresa,
+        ).exists():
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        actividades = ActividadCliente.objects.filter(
+            cliente_id=pk,
+            empresa=request.user.empresa,
+        )
+        serializer = ActividadClienteSerializer(actividades, many=True)
+        return Response(serializer.data)
