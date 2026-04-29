@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 
 from campaigns.models.campaignsend import CampaignSend
+from campaigns.models.plantillaemail import PlantillaEmail
 from campaigns.serializers.campaign_send_serializer import CampaignSendSerializer
 
 from clients.models import Cliente
@@ -262,12 +263,38 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
             }
         """
         cliente_ids = request.data.get("cliente_ids", [])
+        plantilla_id = request.data.get("plantilla_id")
         asunto = request.data.get("asunto", "").strip()
         mensaje = request.data.get("mensaje", "").strip()
 
-        if not cliente_ids or not asunto or not mensaje:
+        if not cliente_ids:
             return Response(
-                {"error": "cliente_ids, asunto y mensaje son obligatorios"},
+                {"error": "cliente_ids es obligatorio"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Resolver asunto y mensaje: plantilla tiene prioridad como base,
+        # pero asunto/mensaje del payload hacen override si se proporcionan.
+        if plantilla_id:
+            try:
+                plantilla = PlantillaEmail.objects.get(
+                    id=plantilla_id,
+                    empresa=request.user.empresa,
+                )
+            except PlantillaEmail.DoesNotExist:
+                return Response(
+                    {"error": "Plantilla no encontrada o no pertenece a tu empresa"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            asunto_final = asunto or plantilla.asunto
+            mensaje_final = mensaje or plantilla.cuerpo
+        else:
+            asunto_final = asunto
+            mensaje_final = mensaje
+
+        if not asunto_final or not mensaje_final:
+            return Response(
+                {"error": "Debes proporcionar asunto y mensaje, o seleccionar una plantilla"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -290,11 +317,12 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
                 continue
 
             # Personalizamos {{nombre}} si aparece en el mensaje
-            mensaje_personalizado = mensaje.replace("{{nombre}}", cliente.nombre)
+            mensaje_personalizado = mensaje_final.replace("{{nombre}}", cliente.nombre)
+            asunto_personalizado = asunto_final.replace("{{nombre}}", cliente.nombre)
 
             ok, error_msg = send_email(
                 to=cliente.email,
-                subject=asunto,
+                subject=asunto_personalizado,
                 message=mensaje_personalizado,
             )
 
@@ -305,7 +333,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
                     empresa=cliente.empresa,
                     usuario=request.user,
                     tipo="email_enviado",
-                    descripcion=f"Email enviado: '{asunto}'",
+                    descripcion=f"Email enviado: '{asunto_final}'",
                 )
             else:
                 errores.append({
