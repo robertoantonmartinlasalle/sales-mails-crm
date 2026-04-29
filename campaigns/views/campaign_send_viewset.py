@@ -46,10 +46,18 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         Usamos TenantManager para:
         - Evitar accesos cruzados
         - Añadir trazabilidad mediante logs
+
+        Acepta ?campana=<id> para filtrar por campaña.
         """
-        return CampaignSend.objects.for_empresa(
+        qs = CampaignSend.objects.for_empresa(
             self.request.user.empresa
         )
+
+        campana_id = self.request.query_params.get("campana")
+        if campana_id:
+            qs = qs.filter(campana_id=campana_id)
+
+        return qs
 
     def perform_create(self, serializer):
         """
@@ -139,6 +147,14 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         envio.error_mensaje = None
         envio.save()
 
+        ActividadCliente.objects.create(
+            cliente=envio.cliente,
+            empresa=envio.cliente.empresa,
+            usuario=request.user,
+            tipo="email_enviado",
+            descripcion=f"Email de campaña enviado: '{asunto}'",
+        )
+
         return Response(
             {"message": "Campaña enviada correctamente."},
             status=status.HTTP_200_OK
@@ -168,6 +184,10 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
         envios = CampaignSend.objects.for_empresa(
             request.user.empresa
         ).filter(estado="pendiente")
+
+        campana_id = request.data.get("campana_id")
+        if campana_id:
+            envios = envios.filter(campana_id=campana_id)
 
         total = envios.count()
         enviados = 0
@@ -214,6 +234,14 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
                 envio.fecha_envio = timezone.now()
                 envio.error_mensaje = None
                 enviados += 1
+
+                ActividadCliente.objects.create(
+                    cliente=envio.cliente,
+                    empresa=envio.cliente.empresa,
+                    usuario=request.user,
+                    tipo="email_enviado",
+                    descripcion=f"Email de campaña enviado: '{asunto}'",
+                )
             else:
                 envio.estado = "error"
                 envio.error_mensaje = error_msg
@@ -333,7 +361,7 @@ class CampaignSendViewSet(viewsets.ModelViewSet):
                     empresa=cliente.empresa,
                     usuario=request.user,
                     tipo="email_enviado",
-                    descripcion=f"Email enviado: '{asunto_final}'",
+                    descripcion=f"Email enviado: '{asunto_personalizado}'",
                 )
             else:
                 errores.append({
