@@ -40,6 +40,13 @@ class ClienteSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    emails_enviados = serializers.SerializerMethodField()
+
+    def get_emails_enviados(self, obj):
+        return obj.historial_actividades.filter(
+            tipo="email_enviado"
+        ).count()
+
     class Meta:
         model = Cliente
 
