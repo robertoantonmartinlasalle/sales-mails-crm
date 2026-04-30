@@ -12,6 +12,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "password",
+            "first_name",
+            "last_name",
             "rol",
             "empresa",
             "fecha_creacion"
@@ -58,3 +60,24 @@ class UsuarioSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
+
+class MeSerializer(serializers.ModelSerializer):
+    """
+    Serializer restringido para el endpoint /me/.
+
+    Solo permite leer y editar datos personales básicos.
+    Campos sensibles (rol, empresa, is_staff, is_superuser)
+    son siempre de solo lectura.
+    """
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "fecha_creacion",
+        ]
+        read_only_fields = ["id", "fecha_creacion"]

@@ -1,8 +1,10 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from users.models.usuario import Usuario
-from users.serializers.usuario_serializer import UsuarioSerializer
+from users.serializers.usuario_serializer import MeSerializer, UsuarioSerializer
 from users.permissions import IsAdminEmpresa
 
 
@@ -89,3 +91,29 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         serializer.save(
             empresa=self.request.user.empresa
         )
+
+    # =========================================================
+    # PERFIL PROPIO (/me/)
+    # =========================================================
+    @action(detail=False, methods=["get", "patch"], url_path="me",
+            permission_classes=[IsAuthenticated])
+    def me(self, request):
+        """
+        GET  /api/users/me/ → devuelve el perfil del usuario autenticado.
+        PATCH /api/users/me/ → actualiza solo first_name, last_name, email.
+
+        Seguridad:
+        - El usuario se obtiene de request.user (JWT), nunca del body.
+        - No se puede editar rol, empresa, is_staff ni is_superuser.
+        - No se puede acceder al perfil de otro usuario.
+        """
+        user = request.user
+
+        if request.method == "GET":
+            serializer = MeSerializer(user)
+            return Response(serializer.data)
+
+        serializer = MeSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
