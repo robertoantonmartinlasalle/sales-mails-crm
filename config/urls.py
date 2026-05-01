@@ -18,6 +18,7 @@ urlpatterns = [
     # =========================================================
     path('api/', include('clients.urls')),
     path('api/', include('campaigns.urls')),
+    path('api/', include('crm.urls')),
 
     # =========================================================
     # AUTENTICACIÓN
