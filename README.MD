@@ -162,3 +162,78 @@ Proyecto desarrollado como práctica de backend, aplicando:
 * Multiempresa real
 * Buenas prácticas en Django REST Framework
 * Validaciones y seguridad en APIs
+
+---
+
+# Uso del sistema (consideraciones importantes)
+
+Debido a la arquitectura multiempresa (multi-tenant) y al sistema de permisos, existen reglas claras sobre cómo deben crearse los datos en el sistema.
+
+## Creación de empresas y roles
+
+Los siguientes elementos deben crearse desde el panel de administración de Django:
+
+* Empresas
+* Roles
+
+Acceso:
+
+http://127.0.0.1:8000/admin/
+
+Estos elementos son gestionados desde admin porque:
+
+* Son entidades base del sistema
+* Definen la estructura organizativa
+* No dependen del contexto de un usuario autenticado
+
+---
+
+## Creación de usuarios (IMPORTANTE)
+
+Los usuarios **NO deben crearse desde el panel de administración**.
+
+Deben crearse a través de la API.
+
+Motivo:
+
+* La asignación de roles depende de la empresa del usuario
+* El panel de administración de Django no permite, de forma nativa, filtrar dinámicamente los roles en función de la empresa seleccionada
+* Esto requeriría personalización avanzada (JavaScript o formularios dinámicos en el admin)
+* Sin este control, se pueden asignar roles incorrectos a usuarios
+
+Al crear usuarios mediante la API:
+
+* Se valida correctamente el rol
+* Se asocia automáticamente a una empresa
+* Se garantiza coherencia con el sistema de permisos
+
+---
+
+## Creación del resto de entidades (vía API)
+
+El resto de recursos del sistema deben gestionarse exclusivamente mediante la API REST:
+
+* Clientes
+* Estados de cliente
+* Campañas
+* Plantillas de email
+* Envíos
+* Oportuidades y actividades
+
+Esto garantiza que:
+
+* Se respete el contexto de la empresa del usuario autenticado
+* Se apliquen todas las validaciones de negocio
+* Se mantenga el aislamiento entre empresas
+
+---
+
+## Nota importante
+
+Evita crear datos desde el panel de administración (excepto empresas y roles), ya que:
+
+* Puede romper el aislamiento multiempresa
+* Puede saltarse validaciones de la API
+* Puede generar datos inconsistentes
+
+---
