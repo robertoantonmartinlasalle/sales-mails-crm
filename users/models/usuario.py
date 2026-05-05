@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.base_user import BaseUserManager
+from django.core.exceptions import ValidationError
 
 from core.models import Empresa
 from core.models.tenant_manager import TenantManager 
@@ -109,3 +110,45 @@ class Usuario(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    # =========================================================
+    # VALIDACIÓN MULTIEMPRESA (CRÍTICA)
+    # =========================================================
+    def clean(self):
+        """
+        Validación clave del sistema multiempresa.
+
+        Garantiza que el rol asignado al usuario
+        pertenece a la misma empresa.
+
+        Esto evita:
+        - Cruces de datos entre empresas
+        - Problemas de permisos
+        - Inconsistencias en el sistema
+        """
+
+        if self.rol and self.empresa:
+            if self.rol.empresa != self.empresa:
+                raise ValidationError(
+                    "El rol asignado no pertenece a la misma empresa que el usuario"
+                )
+
+    # =========================================================
+    # SOBRESCRITURA DE SAVE 
+    # =========================================================
+    def save(self, *args, **kwargs):
+        """
+        Forzamos validación completa antes de guardar.
+
+        IMPORTANTE:
+        Django NO ejecuta clean() automáticamente,
+        por lo que debemos llamar a full_clean().
+
+        Esto asegura que:
+        - Admin esté protegido
+        - API esté protegido
+        - ORM directo esté protegido
+        """
+
+        self.full_clean()  
+        super().save(*args, **kwargs)

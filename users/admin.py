@@ -1,7 +1,63 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 from .models import Usuario, Rol
+
+
+# =========================================================
+# FORMULARIO DE CREACIÓN PERSONALIZADO
+# =========================================================
+class UsuarioCreationForm(UserCreationForm):
+    """
+    Formulario para CREAR usuarios en el admin.
+
+    IMPORTANTE:
+    Usamos UserCreationForm porque incluye:
+    - password1
+    - password2
+
+    Aquí NO complicamos lógica:
+    La seguridad real está en el modelo.
+    """
+
+    class Meta:
+        model = Usuario
+        fields = ("email", "empresa", "rol")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # UX básica
+        self.fields["rol"].required = True
+        self.fields["rol"].empty_label = None
+
+
+# =========================================================
+# FORMULARIO DE EDICIÓN PERSONALIZADO
+# =========================================================
+class UsuarioChangeForm(UserChangeForm):
+    """
+    Formulario para EDITAR usuarios en el admin.
+
+    Aquí sí filtramos correctamente por empresa.
+    """
+
+    class Meta:
+        model = Usuario
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # 🔥 CLAVE: filtrado correcto
+        if self.instance and self.instance.empresa:
+            self.fields["rol"].queryset = Rol.objects.filter(
+                empresa=self.instance.empresa
+            )
+
+        self.fields["rol"].required = True
+        self.fields["rol"].empty_label = None
 
 
 # =========================================================
@@ -40,6 +96,12 @@ class UsuarioAdmin(BaseUserAdmin):
     """
 
     # =========================================================
+    # FORMULARIOS PERSONALIZADOS
+    # =========================================================
+    add_form = UsuarioCreationForm
+    form = UsuarioChangeForm
+
+    # =========================================================
     # IDENTIFICACIÓN DEL USUARIO
     # =========================================================
     ordering = ("email",)
@@ -67,7 +129,7 @@ class UsuarioAdmin(BaseUserAdmin):
     readonly_fields = ("id", "fecha_creacion")
 
     # =========================================================
-    # FORMULARIO DE EDICIÓN (usuario existente)
+    # FORMULARIO DE EDICIÓN
     # =========================================================
     fieldsets = (
         ("Información de acceso", {
@@ -85,7 +147,7 @@ class UsuarioAdmin(BaseUserAdmin):
     )
 
     # =========================================================
-    # FORMULARIO DE CREACIÓN (MUY IMPORTANTE)
+    # FORMULARIO DE CREACIÓN
     # =========================================================
     add_fieldsets = (
         ("Crear nuevo usuario", {
@@ -109,31 +171,15 @@ class UsuarioAdmin(BaseUserAdmin):
     model = Usuario
 
     # =========================================================
-    # FILTRADO DE ROLES POR EMPRESA (CLAVE DEL EJERCICIO)
+    # SEGURIDAD EXTRA (opcional pero recomendable)
     # =========================================================
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    def get_queryset(self, request):
         """
-        Personalizamos el comportamiento del campo ForeignKey 'rol'.
-
-        Django por defecto mostraría TODOS los roles de la base de datos,
-        lo que en un sistema multiempresa provoca:
-
-        - Duplicados visuales (Comercial varias veces)
-        - Posibilidad de asignar roles de otra empresa 
-
-        Solución:
-        Filtramos el queryset para que solo aparezcan los roles
-        pertenecientes a la empresa del usuario autenticado.
+        Limitamos los usuarios visibles en el admin.
         """
+        qs = super().get_queryset(request)
 
-        if db_field.name == "rol":
-            if request.user.is_superuser:
-                # El superusuario puede ver todos los roles del sistema
-                kwargs["queryset"] = Rol.objects.all()
-            else:
-                # SOLO mostramos los roles de su empresa
-                kwargs["queryset"] = Rol.objects.filter(
-                    empresa=request.user.empresa
-                )
+        if request.user.is_superuser:
+            return qs
 
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+        return qs.filter(empresa=request.user.empresa)
