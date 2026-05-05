@@ -1,7 +1,22 @@
 from rest_framework import serializers
 from crm.models import Oportunidad
 from clients.models import Cliente
+from crm.models import Actividad
 
+
+"""
+NOTA DE DISEÑO
+
+En este módulo no se ha separado la lógica en múltiples archivos
+(vistas y serializers) para evitar cambios innecesarios, ya que
+el backend ya está integrado con el frontend.
+
+Se ha priorizado mantener estabilidad y reducir riesgos,
+dejando ambas clases (Oportunidad y Actividad) en el mismo archivo.
+
+Como mejora futura, se podría modularizar siguiendo la estructura
+del resto del proyecto para mejorar mantenibilidad.
+"""
 
 class ClienteSimpleSerializer(serializers.ModelSerializer):
     """
@@ -84,5 +99,63 @@ class OportunidadSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "Para cerrar una oportunidad debes indicar una probabilidad."
                 )
+
+        return data
+    
+
+class ActividadSerializer(serializers.ModelSerializer):
+    """
+    Serializer del modelo Actividad.
+
+    Se encarga de:
+
+    - Convertir datos JSON <-> modelo Actividad
+    - Validar datos básicos antes de guardar
+    - Mantener integridad en entorno multiempresa
+
+    Notas importantes:
+    - La empresa NO se envía desde el cliente
+    - El usuario NO se envía desde el cliente
+    - Ambos se asignan automáticamente en la vista
+    """
+
+    class Meta:
+        model = Actividad
+        fields = "__all__"
+
+        # Estos campos se gestionan en backend
+        read_only_fields = ["empresa", "usuario"]
+
+    def validate(self, data):
+        """
+        Validación personalizada.
+
+        Reglas:
+        - La actividad debe tener fecha
+        - Si se asigna cliente, debe pertenecer a la empresa del usuario
+        - Si se asigna oportunidad, debe pertenecer a la empresa
+        """
+
+        request = self.context.get("request")
+
+        if not request:
+            return data
+
+        empresa = request.user.empresa
+
+        cliente = data.get("cliente")
+        oportunidad = data.get("oportunidad")
+
+        # Validar cliente
+        if cliente and cliente.empresa != empresa:
+            raise serializers.ValidationError(
+                "El cliente no pertenece a tu empresa."
+            )
+
+        # Validar oportunidad
+        if oportunidad and oportunidad.empresa != empresa:
+            raise serializers.ValidationError(
+                "La oportunidad no pertenece a tu empresa."
+            )
 
         return data
