@@ -357,7 +357,7 @@ Authorization: Bearer <access_token>
 
 **Endpoint:**
 
-POST /api/campaign-sends/enviar-masivo/
+POST /api/campaign-sends/send-bulk/
 
 ---
 
