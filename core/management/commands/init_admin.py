@@ -75,7 +75,7 @@ class Command(BaseCommand):
 
         Datos por defecto:
         - Email: admin@crm.com
-        - Password: admin123
+        - Password: administrator_55
 
         IMPORTANTE:
         - Asociamos empresa y rol al usuario
@@ -86,7 +86,7 @@ class Command(BaseCommand):
 
             Usuario.objects.create_superuser(
                 email="admin@crm.com",
-                password="admin123",
+                password="administrator_55",
                 empresa=empresa,
                 rol=rol_admin
             )

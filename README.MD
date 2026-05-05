@@ -91,7 +91,7 @@ python manage.py init_admin
 ### Credenciales por defecto:
 
 Email: [admin@crm.com](mailto:admin@crm.com)
-Password: admin123
+Password: administrator_55
 
 ---
 
