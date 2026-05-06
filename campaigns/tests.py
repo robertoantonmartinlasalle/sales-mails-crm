@@ -26,8 +26,8 @@ class BaseCampanasTest(APITestCase):
     def setUp(self):
         # Empresa A
         self.empresa = crear_empresa(nombre="Empresa A")
-        self.rol_admin = crear_rol(self.empresa, nombre="Administrador")
-        self.rol_comercial = crear_rol(self.empresa, nombre="Comercial")
+        self.rol_admin = crear_rol(self.empresa, nombre="ADMIN")
+        self.rol_comercial = crear_rol(self.empresa, nombre="COMERCIAL")
 
         self.admin = crear_usuario(
             self.empresa, self.rol_admin,
@@ -40,7 +40,7 @@ class BaseCampanasTest(APITestCase):
 
         # Empresa B (para aislamiento)
         self.empresa_b = crear_empresa(nombre="Empresa B", cif="B12345678")
-        self.rol_admin_b = crear_rol(self.empresa_b, nombre="Administrador")
+        self.rol_admin_b = crear_rol(self.empresa_b, nombre="ADMIN")
         self.admin_b = crear_usuario(
             self.empresa_b, self.rol_admin_b,
             email="admin@empresa-b.com", password="testpass123",
@@ -48,6 +48,7 @@ class BaseCampanasTest(APITestCase):
 
         # Plantilla compartida
         self.plantilla = PlantillaEmail.objects.create(
+            empresa=self.empresa,
             nombre="Plantilla Test",
             asunto="Asunto de prueba",
             cuerpo="Hola {{nombre}}, este es un email de prueba.",
@@ -98,7 +99,7 @@ class BaseCampanasTest(APITestCase):
 
 class PlantillaEmailListTests(BaseCampanasTest):
 
-    URL = "/api/plantillas/"
+    URL = "/api/templates/"
 
     def test_admin_puede_listar_plantillas(self):
         self.autenticar_admin()
@@ -115,7 +116,7 @@ class PlantillaEmailListTests(BaseCampanasTest):
 
 class PlantillaEmailCreateTests(BaseCampanasTest):
 
-    URL = "/api/plantillas/"
+    URL = "/api/templates/"
 
     def _payload(self, nombre="Nueva Plantilla"):
         return {
@@ -155,13 +156,13 @@ class PlantillaEmailCreateTests(BaseCampanasTest):
 
     def test_comercial_no_puede_eliminar_plantilla(self):
         self.autenticar_comercial()
-        response = self.client.delete(f"/api/plantillas/{self.plantilla.id}/")
+        response = self.client.delete(f"/api/templates/{self.plantilla.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_admin_puede_eliminar_plantilla(self):
         self.autenticar_admin()
-        response = self.client.delete(f"/api/plantillas/{self.plantilla.id}/")
+        response = self.client.delete(f"/api/templates/{self.plantilla.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
@@ -323,7 +324,7 @@ class CampaignSendEnviarTests(BaseCampanasTest):
         )
 
     def _url_enviar(self):
-        return f"/api/campaign-sends/{self.envio.id}/enviar/"
+        return f"/api/campaign-sends/{self.envio.id}/send/"
 
     @patch("campaigns.views.campaign_send_viewset.send_email", return_value=(True, None))
     def test_enviar_email_exitoso(self, mock_send):
@@ -361,7 +362,7 @@ class CampaignSendEnviarTests(BaseCampanasTest):
 
 class CampaignSendEnviarMasivoTests(BaseCampanasTest):
 
-    URL_MASIVO = "/api/campaign-sends/enviar-masivo/"
+    URL_MASIVO = "/api/campaign-sends/send-bulk/"
 
     def setUp(self):
         super().setUp()

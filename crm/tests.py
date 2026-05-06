@@ -24,8 +24,8 @@ class BaseOportunidadTest(APITestCase):
     def setUp(self):
         # Empresa A
         self.empresa = crear_empresa(nombre="Empresa A")
-        self.rol_admin = crear_rol(self.empresa, nombre="Administrador")
-        self.rol_comercial = crear_rol(self.empresa, nombre="Comercial")
+        self.rol_admin = crear_rol(self.empresa, nombre="ADMIN")
+        self.rol_comercial = crear_rol(self.empresa, nombre="COMERCIAL")
 
         self.admin = crear_usuario(
             self.empresa, self.rol_admin,
@@ -49,7 +49,7 @@ class BaseOportunidadTest(APITestCase):
 
         # Empresa B (para aislamiento)
         self.empresa_b = crear_empresa(nombre="Empresa B", cif="B12345678")
-        self.rol_admin_b = crear_rol(self.empresa_b, nombre="Administrador")
+        self.rol_admin_b = crear_rol(self.empresa_b, nombre="ADMIN")
         self.admin_b = crear_usuario(
             self.empresa_b, self.rol_admin_b,
             email="admin@empresa-b.com", password="testpass123",
