@@ -18,8 +18,8 @@ class BaseUsuariosTest(APITestCase):
     def setUp(self):
         # Empresa y roles propios
         self.empresa = crear_empresa(nombre="Empresa A")
-        self.rol_admin = crear_rol(self.empresa, nombre="Administrador")
-        self.rol_comercial = crear_rol(self.empresa, nombre="Comercial")
+        self.rol_admin = crear_rol(self.empresa, nombre="ADMIN")
+        self.rol_comercial = crear_rol(self.empresa, nombre="COMERCIAL")
 
         self.admin = crear_usuario(
             self.empresa, self.rol_admin,
@@ -34,7 +34,7 @@ class BaseUsuariosTest(APITestCase):
 
         # Segunda empresa para pruebas de aislamiento
         self.empresa_b = crear_empresa(nombre="Empresa B", cif="B12345678")
-        self.rol_admin_b = crear_rol(self.empresa_b, nombre="Administrador")
+        self.rol_admin_b = crear_rol(self.empresa_b, nombre="ADMIN")
         self.admin_b = crear_usuario(
             self.empresa_b, self.rol_admin_b,
             email="admin@empresa-b.com",
@@ -59,7 +59,7 @@ class UsuarioListTests(BaseUsuariosTest):
     Tests de listado de usuarios.
     """
 
-    URL = "/api/usuarios/"
+    URL = "/api/users/"
 
     def test_admin_puede_listar_usuarios(self):
         self.autenticar_admin()
@@ -107,7 +107,7 @@ class UsuarioCreateTests(BaseUsuariosTest):
     Tests de creación de usuarios.
     """
 
-    URL = "/api/usuarios/"
+    URL = "/api/users/"
 
     def _payload(self, email="nuevo@empresa-a.com"):
         return {
@@ -158,7 +158,7 @@ class UsuarioUpdateTests(BaseUsuariosTest):
     """
 
     def _url(self):
-        return f"/api/usuarios/{self.comercial.id}/"
+        return f"/api/users/{self.comercial.id}/"
 
     def test_admin_puede_actualizar_usuario(self):
         self.autenticar_admin()
@@ -183,7 +183,7 @@ class UsuarioDeleteTests(BaseUsuariosTest):
     """
 
     def _url(self):
-        return f"/api/usuarios/{self.comercial.id}/"
+        return f"/api/users/{self.comercial.id}/"
 
     def test_admin_puede_eliminar_usuario(self):
         self.autenticar_admin()

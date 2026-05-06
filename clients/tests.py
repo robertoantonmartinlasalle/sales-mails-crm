@@ -20,8 +20,8 @@ class BaseClientesTest(APITestCase):
     def setUp(self):
         # Empresa A
         self.empresa = crear_empresa(nombre="Empresa A")
-        self.rol_admin = crear_rol(self.empresa, nombre="Administrador")
-        self.rol_comercial = crear_rol(self.empresa, nombre="Comercial")
+        self.rol_admin = crear_rol(self.empresa, nombre="ADMIN")
+        self.rol_comercial = crear_rol(self.empresa, nombre="COMERCIAL")
 
         self.admin = crear_usuario(
             self.empresa, self.rol_admin,
@@ -41,7 +41,7 @@ class BaseClientesTest(APITestCase):
 
         # Empresa B (para aislamiento)
         self.empresa_b = crear_empresa(nombre="Empresa B", cif="B12345678")
-        self.rol_admin_b = crear_rol(self.empresa_b, nombre="Administrador")
+        self.rol_admin_b = crear_rol(self.empresa_b, nombre="ADMIN")
         self.admin_b = crear_usuario(
             self.empresa_b, self.rol_admin_b,
             email="admin@empresa-b.com", password="testpass123",
@@ -71,7 +71,7 @@ class BaseClientesTest(APITestCase):
 
 class EstadoClienteListTests(BaseClientesTest):
 
-    URL = "/api/estado-clientes/"
+    URL = "/api/client-status/"
 
     def test_admin_puede_listar_estados(self):
         self.autenticar_admin()
@@ -97,7 +97,7 @@ class EstadoClienteListTests(BaseClientesTest):
 
 class EstadoClienteCreateTests(BaseClientesTest):
 
-    URL = "/api/estado-clientes/"
+    URL = "/api/client-status/"
 
     def test_admin_puede_crear_estado(self):
         self.autenticar_admin()
@@ -143,7 +143,7 @@ class EstadoClienteCreateTests(BaseClientesTest):
 class EstadoClienteDeleteTests(BaseClientesTest):
 
     def _url(self):
-        return f"/api/estado-clientes/{self.estado.id}/"
+        return f"/api/client-status/{self.estado.id}/"
 
     def test_admin_puede_eliminar_estado(self):
         self.autenticar_admin()
@@ -164,7 +164,7 @@ class EstadoClienteDeleteTests(BaseClientesTest):
 
 class ClienteListTests(BaseClientesTest):
 
-    URL = "/api/clientes/"
+    URL = "/api/clients/"
 
     def _crear_cliente(self, empresa, estado, nombre="Cliente Test", email="cliente@test.com"):
         return Cliente.objects.create(
@@ -209,7 +209,7 @@ class ClienteListTests(BaseClientesTest):
 
 class ClienteCreateTests(BaseClientesTest):
 
-    URL = "/api/clientes/"
+    URL = "/api/clients/"
 
     def _payload(self, nombre="Nuevo Cliente"):
         return {
@@ -289,7 +289,7 @@ class ClienteUpdateTests(BaseClientesTest):
         )
 
     def _url(self):
-        return f"/api/clientes/{self.cliente.id}/"
+        return f"/api/clients/{self.cliente.id}/"
 
     def test_admin_puede_actualizar_cliente(self):
         self.autenticar_admin()
